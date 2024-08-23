@@ -19,3 +19,10 @@ Create a deadline of project submission in this github to avoid any last time ch
 | Arkabrata Basu |  Souvik Ghosh  |  Souvik Ghosh  | Debmalya Sarkar |
 |   Satwik Das   | Debmalya Sarkar | Debmalya Sarkar |       --       |
 |    Debayudh    |       --       | Arghadeep Paul |       --       |
+
+# Project Folder Structure
+
+`Root`
+
+├───`Backend`
+└───`Frontend`
