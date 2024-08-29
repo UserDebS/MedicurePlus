@@ -1,5 +1,6 @@
 {
     "scripts": {
-        "dev" : "py ./backend/main.py"
+        "backend" : "py ./backend/main.py",
+        "frontend" : "cd Frontend && npm start"
     }
 }
