@@ -8,14 +8,10 @@ class Supabase:
         self.key = getenv('SUPABASE_KEY')
         self.url = getenv('SUPABASE_URL')
         self.instance : Client = create_client(self.url, self.key)
-        self.table = 'hello'
     
-    def select(self, query : str = '') -> list:
-        return self.instance.table(self.table).select(query).execute().data
+    def select(self, table : str, query : str = '') -> list:
+        return self.instance.table(table).select(query).execute().data
 
-    def selectFilter(self, query : str = '', filter : dict[str, any] = {}) -> list:
-        return self.instance.table(self.table).select(query).match(filter).execute().data
+    def selectFilter(self, table : str, query : str = '', filter : dict[str, any] = {}) -> list:
+        return self.instance.table(table).select(query).match(filter).execute().data
     
-    def changeTable(self, table : str) -> None:
-        self.table = table
-
