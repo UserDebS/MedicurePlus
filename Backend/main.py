@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from specilizationL import SpecializationTrie, Node
+from suggestionBuilder import Suggestion, Node
 
 import pickle as pkl
 import uvicorn
@@ -7,14 +7,18 @@ import uvicorn
 app = FastAPI()
 
 workingDir = './Backend'
-specialization : SpecializationTrie = pkl.load(open('/'.join([workingDir, 'specilizations.pkl']), 'rb'))
+suggest : Suggestion = pkl.load(open('/'.join([workingDir, 'suggestion.pkl']), 'rb'))
 
 @app.get('/')
 async def root():
-    l : list[str] = specialization.search('sleep')
     return {
-        'written' : l
+        'written' : "hello"
     }
+
+@app.get('/suggestion/{suggestion}')
+async def searchSuggestion(suggestion : str) -> list[str]:
+    return suggest.search(suggestion)
+
 
 if __name__ == '__main__':
     uvicorn.run(app, port=5500)
