@@ -12,6 +12,7 @@ class Supabase:
     
     
     
+    
 if __name__ == '__main__':
     s = Supabase()
     
