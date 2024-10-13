@@ -1,4 +1,5 @@
 from SupabaseClient import Supabase
+
 medicine_data = {
     "Aspirin": {
         "medical_conditions": ["Pain", "Fever", "Heart Attack Prevention"],
@@ -643,29 +644,15 @@ def nameToColumn(text : str) -> str:
 
 if __name__ == '__main__':
     db = Supabase()
-    records : dict[str, list[str]] = {
-        'medical_conditions' : [],
-        'active_ingredient' : [],
-        'dosage_forms' : [],
-        'side_effects' : [],
-        'brand_names' : []
-    }
     for i in medicine_data:
-        data = medicine_data.get(i)
-        records['medical_conditions'].extend(data.get('medical_conditions')),
-        records['active_ingredient'].extend(data.get('active_ingredient')),
-        records['dosage_forms'].extend(data.get('dosage_forms')),
-        records['side_effects'].extend(data.get('side_effects')),
-        records['brand_names'].extend(data.get('brand_names')),
-
-    records['medical_conditions'] = list(set(records['medical_conditions']))
-    records['active_ingredient'] = list(set(records['active_ingredient']))
-    records['dosage_forms'] = list(set(records['dosage_forms']))
-    records['side_effects'] = list(set(records['side_effects']))
-    records['brand_names'] = list(set(records['brand_names']))
-
-    for i in records:
-        db.insert(i, records=records[i])
+        print(i ,db.insertMedicine({
+            'name' : i,
+            'medical_conditions' : medicine_data.get(i).get('medical_conditions'),
+            'active_ingredients' : medicine_data.get(i).get('active_ingredient'),
+            'dosage_forms' : medicine_data.get(i).get('dosage_forms'),
+            'side_effects' : medicine_data.get(i).get('side_effects'),
+            'brand_names' : medicine_data.get(i).get('brand_names'),
+        }))
     
     
 

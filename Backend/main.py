@@ -1,7 +1,4 @@
-from fastapi import FastAPI, Request, Response
-from fastapi.middleware.cors import CORSMiddleware
-from SupabaseClient import Supabase
-from pydantic import BaseModel
+from fastapi import FastAPI
 import uvicorn
 
 app = FastAPI()
