@@ -1,5 +1,5 @@
 from supabase import create_client, Client
-from datatypes import MedicineData
+from datatypes import MedicineData, UserData
 from dotenv import load_dotenv
 from os import getenv
 load_dotenv()
@@ -23,6 +23,17 @@ class Supabase:
                 'status' : 401
             }
     
+    def authByToken(self, token : str) -> str | int:
+        try:
+            pass
+        except:
+            return 404
+        
+    def authByUserPass(self, userdata : UserData) -> str | int:
+        try:
+            pass
+        except:
+            return 404
     
 if __name__ == '__main__':
     s = Supabase()
