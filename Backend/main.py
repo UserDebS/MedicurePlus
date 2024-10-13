@@ -20,8 +20,13 @@ supabase = Supabase()
 @app.get('/login')
 def authByToken(req : Request, res : Response) -> dict[str, int]:
     try:
-        newtoken = supabase.authByToken()
-        
+        if(req.cookies.get('medicure_auth') == None):
+            return {'status' : 404}
+        newtoken = supabase.authByToken(req.cookies.get('medicure_auth'))
+        res.set_cookie('medicure_auth', newtoken, max_age = 10 * 24 * 3600000)
+        return {
+            'status' : 200
+        }
     except:
         return {
             'status' : 404
