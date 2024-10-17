@@ -18,22 +18,35 @@ class Supabase:
             return {
                 'status' : 201
             }
-        except:
+        except Exception as e:
+            print(e)
             return {
                 'status' : 401
             }
     
-    def authByToken(self, token : str) -> str | int:
+    def authByToken(self, token : str) -> dict[str, int | str]:
         try:
             pass
         except:
-            return 404
+            return {
+                'status' : 404
+            }
         
-    def authByUserPass(self, userdata : UserData) -> str | int:
+    def authByUserPass(self, userdata : UserData) -> dict[str, int | str]:
         try:
             pass
         except:
-            return 404
+            return {
+                'status' : 404
+            }
+        
+    def register(self, userdata : UserData) -> dict[str, int | str]:
+        try:
+            pass
+        except:
+            return {
+                'status' : 400
+            }
     
 if __name__ == '__main__':
     s = Supabase()

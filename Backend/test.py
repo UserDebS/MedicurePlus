@@ -646,17 +646,16 @@ def nameToColumn(text : str) -> str:
 
 if __name__ == '__main__':
     db = Supabase()
-    for i in medicine_data:
-        data = {
-            'name' : i,
-            'medical_conditions' : medicine_data.get(i).get('medical_conditions'),
-            'active_ingredients' : medicine_data.get(i).get('active_ingredient'),
-            'dosage_forms' : medicine_data.get(i).get('dosage_forms'),
-            'side_effects' : medicine_data.get(i).get('side_effects'),
-            'brand_names' : medicine_data.get(i).get('brand_names'),
-        }
-        print('Uploading', data)
-        print(i ,db.insertMedicine(data))
+    data = {
+        'name' : "Lisinopril",
+        'medical_conditions' : ["Hypertension", "Heart Failure"],
+        'active_ingredients' : ["Lisinopril"],
+        'dosage_forms' : ["Tablet"],
+        'side_effects' : ["Cough", "Dizziness", "Fatigue", "Hypotension", "Electrolyte Imbalance"],
+        'brand_names' : ["Prinivil", "Zestril"],
+    }
+    print(db.insertMedicine(data))
+    
         
 
     

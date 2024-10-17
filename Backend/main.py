@@ -22,8 +22,10 @@ def authByToken(req : Request, res : Response) -> dict[str, int]:
     try:
         if(req.cookies.get('medicure_auth') == None):
             return {'status' : 404}
-        newtoken = supabase.authByToken(req.cookies.get('medicure_auth'))
-        res.set_cookie('medicure_auth', newtoken, max_age = 10 * 24 * 3600000)
+        status = supabase.authByToken(req.cookies.get('medicure_auth'))
+        if(status.get('status') == 404):
+            return {'status' : 404}
+        res.set_cookie('medicure_auth', status.get('token'), max_age = 10 * 24 * 3600000)
         return {
             'status' : 200
         }
@@ -35,8 +37,8 @@ def authByToken(req : Request, res : Response) -> dict[str, int]:
 @app.post('/login')
 def authByUserPass(userdata : UserData, res : Response) -> dict[str, int]:
     try:
-         #post userdata to database
-         pass
+        newtoken = supabase.authByUserPass(userdata)
+        res.set_cookie('medicure_auth', newtoken, max_age = 10 * 24 * 3600000)
     except:
         return{
             'status':400
