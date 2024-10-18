@@ -1,4 +1,4 @@
-from SupabaseClient import Supabase
+# from SupabaseClient import Supabase
 import os
 import time as t
 
@@ -645,17 +645,18 @@ def nameToColumn(text : str) -> str:
 
 
 if __name__ == '__main__':
-    db = Supabase()
-    data = {
-        'name' : "Lisinopril",
-        'medical_conditions' : ["Hypertension", "Heart Failure"],
-        'active_ingredients' : ["Lisinopril"],
-        'dosage_forms' : ["Tablet"],
-        'side_effects' : ["Cough", "Dizziness", "Fatigue", "Hypotension", "Electrolyte Imbalance"],
-        'brand_names' : ["Prinivil", "Zestril"],
-    }
-    print(db.insertMedicine(data))
+    # db = Supabase()
+    # data = {
+    #     'name' : "Lisinopril",
+    #     'medical_conditions' : ["Hypertension", "Heart Failure"],
+    #     'active_ingredients' : ["Lisinopril"],
+    #     'dosage_forms' : ["Tablet"],
+    #     'side_effects' : ["Cough", "Dizziness", "Fatigue", "Hypotension", "Electrolyte Imbalance"],
+    #     'brand_names' : ["Prinivil", "Zestril"],
+    # }
+    # print(db.insertMedicine(data))
     
+
         
 
     

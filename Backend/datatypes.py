@@ -10,6 +10,7 @@ class MedicineData(BaseModel):
 
 class UserData(BaseModel):
     username : str
+    email : str
     password : str
 
 class MedicineDetails(BaseModel):
@@ -17,3 +18,7 @@ class MedicineDetails(BaseModel):
     cost : float
     quantity : int
     self_url : str #http://localhost:3000/medicine/{id}
+
+class AuthData(BaseModel): #For authentication purpose
+    email : str
+    password : str
