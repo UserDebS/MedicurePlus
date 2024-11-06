@@ -14,9 +14,10 @@ class Supabase:
     
     def insertMedicine(self, medicineData : MedicineData) -> dict[str, int]:
         try:
-            self.__instance.rpc('add_new_medicine', {
+            data : int = self.__instance.rpc('add_new_medicine', {
                 'medicine_data' : medicineData
-            }).execute()
+            }).execute().data
+            
             return {
                 'status' : 201
             }
