@@ -1,18 +1,18 @@
-from fastapi import FastAPI, Request, Response, HTTPException
+from fastapi import FastAPI, Request, Response, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 
-from datatypes import UserData, MedicineData, MedicineDetails, AuthData
+from datatypes import ImageData, UserData, MedicineData, MedicineDetails, AuthData
 from SupabaseClient import Supabase
 
 import uvicorn
 
 app = FastAPI()
 app.add_middleware(
-    CORSMiddleware, 
-    allow_origins=['*'],
+    CORSMiddleware,
+    allow_origins=['http://localhost:3000'],  # Allows only the origins specified
     allow_credentials=True,
-    allow_methods=['*'],
-    allow_headers=["Access-Control-Allow-Origin", 'Set-Cookie', 'Accept']
+    allow_methods=["*"],  # Allows all methods, including POST, OPTIONS
+    allow_headers=["Access-Control-Allow-Origin", 'Set-Cookie', 'Accept'],  # Allows all headers
 )
 
 supabase = Supabase()
@@ -93,13 +93,13 @@ def getMatchingMedicines(search : str) -> list[MedicineDetails]:
     except:
         pass
 
-# @app.post('/scan')
-# def readImageData(img : list[list[list[int, int, int]]]) -> list[MedicineDetails]:
-#     try:
-#         #using Med we can get all medicine name
-#         pass
-#     except:
-#         pass
+@app.post('/upload')
+async def readImageData(data : ImageData) -> int:
+    try:
+        print(data)
+        return 200
+    except:
+        return 400
 
 
 if __name__ == '__main__':

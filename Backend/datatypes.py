@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from fastapi import UploadFile, File
 
 class MedicineData(BaseModel):
     name : str
@@ -22,3 +23,7 @@ class MedicineDetails(BaseModel):
 class AuthData(BaseModel): #For authentication purpose
     email : str
     password : str
+
+
+class ImageData(BaseModel): # I will need the base64 url only
+    image : str
