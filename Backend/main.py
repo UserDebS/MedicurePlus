@@ -1,85 +1,117 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+<<<<<<< HEAD
 from datatypes import MedicineData,UserData,MedicineDetails
+=======
+
+from datatypes import ImageData, UserData, MedicineData, MedicineDetails, AuthData
+from SupabaseClient import Supabase
+
+>>>>>>> 60cb360a762d47704b1bd9259eae9d75be375b61
 import uvicorn
 
 
 app = FastAPI()
 app.add_middleware(
-    CORSMiddleware, 
-    allow_origin=['*'],
-    allow_crededentials=True,
-    allow_methods=['*'],
-    allow_headers=["Access-Control-Allow-Origin", 'Set-Cookie', 'Accept']
+    CORSMiddleware,
+    allow_origins=['http://localhost:3000'],  # Allows only the origins specified
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods, including POST, OPTIONS
+    allow_headers=["Access-Control-Allow-Origin", 'Set-Cookie', 'Accept'],  # Allows all headers
 )
+
 supabase = Supabase()
 
+<<<<<<< HEAD
 
 
 
 
+=======
+>>>>>>> 60cb360a762d47704b1bd9259eae9d75be375b61
 @app.get('/login')
 def authByToken(req : Request, res : Response) -> dict[str, int]:
     try:
-        token : str = req.cookies.get('medicure_auth')
-        supabase.authBytoken(token)
-    except:
+        if(req.cookies.get('medicure_auth') == None):
+            raise HTTPException(status_code=404, detail='Token does not exist')
+
+        status = supabase.authByToken(req.cookies.get('medicure_auth'))
+
+        if(status.get('status') == 404):
+            raise HTTPException(status_code=404, detail='Token does not exist')
+        
+        res.set_cookie('medicure_auth', status.get('token'), max_age = 10 * 24 * 3600000)
+
         return {
-            'status' : 404
-        }
-@app.post('/login')
-def authByUserPass(userdata : UserData, res : Response) -> dict[str, int]:
-    try:
-         #post userdata to database
-    except:
-        return{
-            'status':400
-        }
-@app.post('/register')
-def register(userdata : UserData, res : Response):
-    try:
-       #pass 'userdata' to supbase to register user
-    except:
-        return{
-            'status':404
+            'status' : 200
         }
     
-@app.post('/medicine')
-def getMedicines() -> list[MedicineDetails]:
+    except:
+        raise HTTPException(status_code=404, detail='Token does not exist')
+    
+@app.post('/login')
+def authByUserPass(authdata : AuthData, res : Response) -> dict[str, int]:
     try:
+        status = supabase.authByUserPass(authdata)
+
+        if(status.get('status') == 404):
+            raise HTTPException(status_code=404, detail='Token does not exist')
         
-    except:
-        return{
-            'status':400
-        }
+        res.set_cookie('medicure_auth', status.get('token'), max_age = 10 * 24 * 3600000)
 
-@app.get('/scan')
-def scan()->list[str]:
+        return {
+            'status' : 200
+        }
+    except:
+        raise HTTPException(status_code=404, detail='Token does not exist')
+
+    
+@app.post('/register')
+def register(userdata : UserData, res : Response) -> dict[str, int]:
     try:
-          #using Med we can get all medicine name
-    except:
-        return{
-            'status':400
-        }
+        status = supabase.register(userdata=userdata)
 
-@app.get('/home')
-def homepage():
+        if(status.get('status') == 409):
+            raise HTTPException(status_code=409, detail='Account already exists')
+          
+        res.set_cookie('medicure_auth', status.get('token'), max_age = 10 * 24 * 3600000)
+
+        return {
+            'status' : 201
+        }
+    
+    except:
+        raise HTTPException(status_code=409, detail='Account already exists')
+
+    
+@app.get('/medicines')
+def getMedicines(req : Request) -> list[MedicineDetails]:
     try:
-       #rendering homepage
+        pass
     except:
-        return{
-            'status':400
-        }
+        pass
 
-@app.get('/home/')
-def suggestions(suggestion : str) -> list[str]:
+@app.get('/medicines')
+def getSuggestions(suggestion : str) -> list[str]: #Using prefix tree
+    try:
+        pass
+    except:
+        pass
 
+@app.get('/medicines')
+def getMatchingMedicines(search : str) -> list[MedicineDetails]:
+    try:
+        pass
+    except:
+        pass
 
-@app.post('/doctor')
-
-@app.post('/consult_doctor')
-
-@app.post('/delivery')
+@app.post('/upload')
+async def readImageData(data : ImageData) -> int:
+    try:
+        print(data)
+        return 200
+    except:
+        return 400
 
 
 if __name__ == '__main__':

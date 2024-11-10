@@ -1,4 +1,6 @@
 from SupabaseClient import Supabase
+import os
+import time as t
 
 medicine_data = {
     "Aspirin": {
@@ -9,7 +11,7 @@ medicine_data = {
         "brand_names": ["Bayer"]
     },
     "Ibuprofen": {
-        "medical_conditions": ["Pain", "Inflammation"],
+        "medical_conditions": ["Pain", "Inflammation"],##############
         "active_ingredient": ["Ibuprofen"],
         "dosage_forms": ["Tablet"],
         "side_effects": ["Nausea", "Dizziness", "Stomach Pain"],
@@ -23,7 +25,7 @@ medicine_data = {
         "brand_names": ["Voltaren", "Cataflam"]
     },
     "Naproxen": {
-        "medical_conditions": ["Pain", "Inflammation"],
+        "medical_conditions": ["Pain", "Inflammation"],##############
         "active_ingredient": ["Naproxen Sodium"],
         "dosage_forms": ["Tablet"],
         "side_effects": ["Indigestion", "Drowsiness", "Headache"],
@@ -644,16 +646,19 @@ def nameToColumn(text : str) -> str:
 
 if __name__ == '__main__':
     db = Supabase()
-    for i in medicine_data:
-        print(i ,db.insertMedicine({
-            'name' : i,
-            'medical_conditions' : medicine_data.get(i).get('medical_conditions'),
-            'active_ingredients' : medicine_data.get(i).get('active_ingredient'),
-            'dosage_forms' : medicine_data.get(i).get('dosage_forms'),
-            'side_effects' : medicine_data.get(i).get('side_effects'),
-            'brand_names' : medicine_data.get(i).get('brand_names'),
-        }))
+    data = {
+        'name': "Tamsulosin",
+        'medical_conditions': ["Benign Prostatic Hyperplasia (BPH)"],
+        'active_ingredients': ["Tamsulosin Hydrochloride"],
+        'dosage_forms': ["Capsule"],
+        'side_effects': ["Dizziness", "Headache", "Nasal Congestion", "Retrograde Ejaculation"],
+        'brand_names': ["Flomax"],
+    }
+    print(db.insertMedicine(data))
     
+
+        
+
     
 
     
