@@ -7,3 +7,14 @@ class MedicineData(BaseModel):
     dosage_forms : list[str]
     side_effects : list[str]
     brand_names : list[str]
+
+class UserData(BaseModel):
+    username : str
+    password : str
+
+class MedicineDetails(BaseModel):
+    name : str
+    cost : float
+    quantity : int
+    self_url : str #http://localhost:3000/medicine/{id}
+    

@@ -1,5 +1,8 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from datatypes import MedicineData,UserData,MedicineDetails
 import uvicorn
+
 
 app = FastAPI()
 app.add_middleware(
@@ -11,15 +14,9 @@ app.add_middleware(
 )
 supabase = Supabase()
 
-class UserData(BaseModel):
-    username : str
-    password : str
 
-class MedicineDetails(BaseModel):
-    name : str
-    cost : float
-    quantity : int
-    self_url : str #http://localhost:3000/medicine/{id}
+
+
 
 @app.get('/login')
 def authByToken(req : Request, res : Response) -> dict[str, int]:
