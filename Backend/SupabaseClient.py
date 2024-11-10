@@ -1,5 +1,5 @@
 from supabase import create_client, Client
-from datatypes import MedicineData, UserData, AuthData
+from datatypes import MedicineData, UserData, AuthData, MedicineDetails, MedicineDetailedData
 from service.encryption import strGen, encryption
 
 from dotenv import load_dotenv
@@ -90,8 +90,39 @@ class Supabase:
             return {
                 'status' : 409
             }
+        
+    def recommendById(self, id : int, offset : int, limit : int) -> MedicineDetailedData:
+        data =  self.__instance.table('score_storage').select('med_id1, med_id2').or_(f'med_id1.eq.{id},med_id2.eq.{id}').limit(limit).offset(offset).execute().data
+        def check(c : dict[str, int]):
+            if(c['med_id1'] == id):
+                return c['med_id2']
+            else:
+                return c['med_id1']
+            
+        data = list(map(check, data))
+        data = self.__instance.rpc('medicinedtlfromlist', {
+            'data' : data
+        }).execute().data
+        return data
+
+    def getAllMedicines(self, offset : int, limit : int) -> list[MedicineDetails]:
+        return self.__instance.table('medicine_with_details').select('*').limit(limit).offset(offset).execute().data
     
-if __name__ == '__main__':
+    def getSearchedMedicines(self, search : str, offset : int, limit : int) -> list[MedicineDetails]:
+        try:
+            return self.__instance.rpc('get_searched_medicines', {
+                'search' : search,
+                'lmt' : limit,
+                'offst' : offset
+            }).execute().data
+        except Exception as e:
+            print(e)
+
+    
+    
+if __name__ == '__main__': # plan is to fetch the entire data like brands etc using joins and such I am done for today, see you tomorrow :) DS
     s = Supabase()
+    print(s.getSearchedMedicines('A',0, 5))
+
     
     

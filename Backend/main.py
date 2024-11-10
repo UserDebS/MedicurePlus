@@ -1,8 +1,12 @@
 from fastapi import FastAPI, Request, Response, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+import pickle as pkl
+import os
 
-from datatypes import ImageData, UserData, MedicineData, MedicineDetails, AuthData
+from datatypes import ImageData, UserData, MedicineDetails, AuthData, MedicineDetailedData
 from SupabaseClient import Supabase
+from service.trie import Trie
+from service.imageClassifier import ImageClassifier
 
 import uvicorn
 
@@ -16,6 +20,10 @@ app.add_middleware(
 )
 
 supabase = Supabase()
+pklreader = open(os.path.join(os.path.join(os.path.dirname(__file__), 'model'), 'trie.pkl'), 'rb')
+trie : Trie = pkl.load(pklreader)
+pklreader.close()
+imageClassifier = ImageClassifier(trie=trie)
 
 @app.get('/login')
 def authByToken(req : Request, res : Response) -> dict[str, int]:
@@ -72,34 +80,47 @@ def register(userdata : UserData, res : Response) -> dict[str, int]:
         raise HTTPException(status_code=409, detail='Account already exists')
 
     
-@app.get('/medicines')
-def getMedicines(req : Request) -> list[MedicineDetails]:
+@app.get('/medicines') # Get all medicines
+def getMedicines(req : Request, offset : int = 0, limit : int = 20) -> list[MedicineDetails]:
+    try:
+        if(req.cookies.get('medicure_auth') is None): # plan is to only return list if user is authenticated
+            pass
+        return supabase.getAllMedicines(offset=offset, limit=limit)
+    except:
+        return []
+
+@app.get('/medicines/{id}') # Get a specific medicine
+def getMedicineById(id : int, offset : int = 0, limit : int = 20) -> MedicineDetailedData:
     try:
         pass
     except:
         pass
 
-@app.get('/medicines')
-def getSuggestions(suggestion : str) -> list[str]: #Using prefix tree
+@app.get('/suggestions/')
+async def getSuggestions(search : str) -> list[str]: #Using prefix tree suggestions --
     try:
-        pass
+        return trie.showSimilarities(search)
     except:
-        pass
+        return []
 
-@app.get('/medicines')
-def getMatchingMedicines(search : str) -> list[MedicineDetails]:
+@app.get('/find/')
+def getSearchedMedicines(search : str, offset : int = 0, limit : int = 20) -> list[MedicineDetails]:# For searching using text
     try:
-        pass
+        return supabase.getSearchedMedicines(search=search, offset=offset, limit=limit) or []
     except:
-        pass
+        return []
+    
+@app.get('/recommend/{id}')
+def getRecommendedMedicines(id : int) -> list[MedicineDetails]:
+    pass
 
 @app.post('/upload')
-async def readImageData(data : ImageData) -> int:
+async def readImageData(data : ImageData) -> list[str]: # For searching using images -- 
     try:
-        print(data)
-        return 200
-    except:
-        return 400
+        return imageClassifier.read(data.image)
+    except Exception as e:
+        print(e)
+        return []
 
 
 if __name__ == '__main__':
