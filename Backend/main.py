@@ -111,8 +111,11 @@ def getSearchedMedicines(search : str, offset : int = 0, limit : int = 20) -> li
         return []
     
 @app.get('/recommend/{id}')
-def getRecommendedMedicines(id : int) -> list[MedicineDetails]:
-    pass
+def getRecommendedMedicines(id : int, limit : int = 20, offset : int = 0) -> list[MedicineDetails]:
+    try:
+        return supabase.recommendById(id, offset=offset, limit=limit)
+    except:
+        raise HTTPException(status_code=404, detail='Medicine could not be found')
 
 @app.post('/upload')
 async def readImageData(data : ImageData) -> list[str]: # For searching using images -- 

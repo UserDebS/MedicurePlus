@@ -2,6 +2,8 @@ from pydantic import BaseModel
 
 class MedicineData(BaseModel): # Will be used for uploading medicines
     name : str
+    cost : float
+    available : bool
     medical_conditions : list[str]
     active_ingredients : list[str]
     dosage_forms : list[str]

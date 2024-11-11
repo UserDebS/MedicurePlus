@@ -103,10 +103,19 @@ class Supabase:
         data = self.__instance.rpc('medicinedtlfromlist', {
             'data' : data
         }).execute().data
-        return data
+        return {
+            'data' : self.__instance.rpc('get_full_medicine_details', {
+                'med_id' : id
+             }).single().execute().data['data'],
+            'recommendation' : data
+        }
+
 
     def getAllMedicines(self, offset : int, limit : int) -> list[MedicineDetails]:
-        return self.__instance.table('medicine_with_details').select('*').limit(limit).offset(offset).execute().data
+        try:
+            return self.__instance.table('medicine_with_details').select('*').limit(limit).offset(offset).execute().data
+        except:
+            return []
     
     def getSearchedMedicines(self, search : str, offset : int, limit : int) -> list[MedicineDetails]:
         try:
@@ -117,12 +126,13 @@ class Supabase:
             }).execute().data
         except Exception as e:
             print(e)
+            return []
 
     
     
 if __name__ == '__main__': # plan is to fetch the entire data like brands etc using joins and such I am done for today, see you tomorrow :) DS
     s = Supabase()
-    print(s.getSearchedMedicines('A',0, 5))
+    print(s.recommendById(87, 0, 3))
 
     
     
