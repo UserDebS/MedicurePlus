@@ -1,30 +1,8 @@
-# MedicurePlus
+# React + Vite
 
-This is our final year project on the use of machine learning in heath industry.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-# Collaborators' handbook
+Currently, two official plugins are available:
 
-* Collaborators are requested not to make or push changes directly into the main/master branch. Create a new branch for you using your own name or your group name for example: frontend, backend, model designing, ask the project leader(Souvik Ghosh) to check the changes, then commit it.
-* Fronend and backend collaborators will have their own directories.
-* If there is any need of using any secrets(ex: api key, anon key), use a **.env** file for security precautions.
-* Force pushes are not allowed.
-
-# Project Completion
-
-Create a deadline of project submission in this github to avoid any last time changes.
-
-## Team Members:
-
-|    Frontend    |     Backend     | Model Designing  |    Database    |
-| :------------: | :-------------: | :-------------:  | :-------------:|
-| Arkabrata Basu |  Souvik Ghosh   |  Souvik Ghosh    | Debmalya Sarkar|
-|   Satwik Das   | Debmalya Sarkar | Debmalya Sarkar  |       --       |
-|    Debayudh    |       --        | Arghadeep Paul   |       --       |
-
-# Project Folder Structure
-
-`Root`
-
-|---`Backend`
-
-|---`Frontend`
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
