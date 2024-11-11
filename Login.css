@@ -1,0 +1,72 @@
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+.form-container {
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.form-header {
+    font-weight: 700;
+    font-size: 40px;
+    line-height: 58px;
+    text-align: left;
+    background-color: #cae5ff;
+    padding: 20px;
+}
+
+.login-header {
+    background-color: #cae5ff;
+}
+
+.signup-header {
+    background-color: #cae5ff;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    font-weight: 400;
+    font-size: 35px;
+    line-height: 58px;
+    color: #000;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    font-size: 36px;
+    line-height: 44px;
+    margin-top: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.enter-button {
+    background-color: #ea0000;
+    color: #fff;
+    padding: 15px;
+    font-size: 48px;
+    line-height: 58px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.footer-text {
+    font-size: 24px;
+    line-height: 29px;
+    text-align: center;
+    color: #000;
+    margin-top: 10px;
+}
+
+.footer-text span {
+    color: #ea0000;
+    cursor: pointer;
+}
