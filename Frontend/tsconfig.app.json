@@ -7,6 +7,14 @@
     "module": "ESNext",
     "skipLibCheck": true,
 
+    //Shadcn ui
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    },
+
     /* Bundler mode */
     "moduleResolution": "Bundler",
     "allowImportingTsExtensions": true,

@@ -1,5 +1,5 @@
 from supabase import create_client, Client
-from datatypes import MedicineData, UserData, AuthData, MedicineDetails, MedicineDetailedData
+from datatypes import MedicineUploadData, UserData, AuthData, MedicineDetails, MedicineDetailedData
 from service.encryption import strGen, encryption
 
 from dotenv import load_dotenv
@@ -12,7 +12,7 @@ class Supabase:
         self.__url = getenv('SUPABASE_URL')
         self.__instance : Client = create_client(self.__url, self.__key)
     
-    def insertMedicine(self, medicineData : MedicineData) -> dict[str, int]:
+    def insertMedicine(self, medicineData : MedicineUploadData) -> dict[str, int]:
         try:
             data : int = self.__instance.rpc('add_new_medicine', {
                 'medicine_data' : medicineData

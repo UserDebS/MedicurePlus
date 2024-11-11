@@ -1,8 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css'
+import { Button } from './components/ui/button';
 
 function App() {
   const [imageInput, setImageInput] = useState<File | null>(null);
+
+  // useEffect(() => {
+  //     fetch('http://127.0.0.1:5500/suggestion?suggestion=a').then(async(res) => console.log(await res.json()));
+  // }, [])
 
   const toBase64 = async () => {
       return new Promise((resolve, reject) => {
@@ -45,8 +50,8 @@ function App() {
   return (
     <form onSubmit={handleSubmit}>
       <input type="file" accept='image/*' name="image" id="image" onChange={e => imageChange(e)} />
-      <button onClick={_ => printer()}>Printer</button>
-      <button type="submit">Submit</button>
+      <Button onClick={_ => printer()}>Printer</Button>
+      <Button type="submit">Submit</Button>
     </form>
   )
 }

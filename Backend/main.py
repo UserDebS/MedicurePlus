@@ -25,7 +25,7 @@ trie : Trie = pkl.load(pklreader)
 pklreader.close()
 imageClassifier = ImageClassifier(trie=trie)
 
-@app.get('/login')
+@app.get('/login') #done
 def authByToken(req : Request, res : Response) -> dict[str, int]:
     try:
         if(req.cookies.get('medicure_auth') == None):
@@ -45,7 +45,7 @@ def authByToken(req : Request, res : Response) -> dict[str, int]:
     except:
         raise HTTPException(status_code=404, detail='Token does not exist')
     
-@app.post('/login')
+@app.post('/login') #done
 def authByUserPass(authdata : AuthData, res : Response) -> dict[str, int]:
     try:
         status = supabase.authByUserPass(authdata)
@@ -62,7 +62,7 @@ def authByUserPass(authdata : AuthData, res : Response) -> dict[str, int]:
         raise HTTPException(status_code=404, detail='Token does not exist')
 
     
-@app.post('/register')
+@app.post('/register') #done
 def register(userdata : UserData, res : Response) -> dict[str, int]:
     try:
         status = supabase.register(userdata=userdata)
@@ -80,44 +80,37 @@ def register(userdata : UserData, res : Response) -> dict[str, int]:
         raise HTTPException(status_code=409, detail='Account already exists')
 
     
-@app.get('/medicines') # Get all medicines
+@app.get('/medicines') # Get all medicines (Done)
 def getMedicines(req : Request, offset : int = 0, limit : int = 20) -> list[MedicineDetails]:
     try:
         if(req.cookies.get('medicure_auth') is None): # plan is to only return list if user is authenticated
-            pass
+            raise HTTPException(status_code=400, detail='Invalid User')
         return supabase.getAllMedicines(offset=offset, limit=limit)
     except:
         return []
 
-@app.get('/medicines/{id}') # Get a specific medicine
+@app.get('/medicines/{id}') # Get a specific medicine (Done)
 def getMedicineById(id : int, offset : int = 0, limit : int = 20) -> MedicineDetailedData:
     try:
-        pass
+        return supabase.recommendById(id, offset=offset, limit=limit)
     except:
-        pass
+        raise HTTPException(status_code=404, detail='Medicine could not be found')
 
-@app.get('/suggestions/')
+@app.get('/suggestions/') # Done
 async def getSuggestions(search : str) -> list[str]: #Using prefix tree suggestions --
     try:
         return trie.showSimilarities(search)
     except:
         return []
 
-@app.get('/find/')
+@app.get('/find/') #done
 def getSearchedMedicines(search : str, offset : int = 0, limit : int = 20) -> list[MedicineDetails]:# For searching using text
     try:
         return supabase.getSearchedMedicines(search=search, offset=offset, limit=limit) or []
     except:
         return []
-    
-@app.get('/recommend/{id}')
-def getRecommendedMedicines(id : int, limit : int = 20, offset : int = 0) -> list[MedicineDetails]:
-    try:
-        return supabase.recommendById(id, offset=offset, limit=limit)
-    except:
-        raise HTTPException(status_code=404, detail='Medicine could not be found')
 
-@app.post('/upload')
+@app.post('/upload') #done
 async def readImageData(data : ImageData) -> list[str]: # For searching using images -- 
     try:
         return imageClassifier.read(data.image)
