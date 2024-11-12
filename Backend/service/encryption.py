@@ -14,3 +14,9 @@ def strGen(length : int) -> str:
     for i in range(length):
         result += alphalist[randint(0, len(alphalist) - 1)]
     return result
+
+def capitalize(s : str) -> str:
+    return s.capitalize()
+
+if __name__ == '__main__':
+    print(capitalize('hello'))

@@ -41,3 +41,21 @@ class ImageData(BaseModel): # I will need the base64 url only
 class MedicineDetailedData(BaseModel):
     data : MedicineData
     recommendation : list[MedicineDetails]
+
+class OrderItem(BaseModel):
+    name : str #medicine name
+    quantity : int #medicine quantity
+
+class Order(BaseModel):
+    order_list : list[OrderItem]
+
+class PrevOrderItem(BaseModel):
+    name : str
+    cost : float
+    quantity : int
+
+class PrevOrderModel(BaseModel):
+    total : float
+    placed : str
+    orders : list[PrevOrderItem]
+

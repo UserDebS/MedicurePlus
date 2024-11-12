@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import pickle as pkl
 import os
 
-from datatypes import ImageData, UserData, MedicineDetails, AuthData, MedicineDetailedData
+from datatypes import ImageData, UserData, MedicineDetails, AuthData, MedicineDetailedData, Order, PrevOrderModel
 from SupabaseClient import Supabase
 from service.trie import Trie
 from service.imageClassifier import ImageClassifier
@@ -111,13 +111,31 @@ def getSearchedMedicines(search : str, offset : int = 0, limit : int = 20) -> li
         return []
 
 @app.post('/upload') #done
-async def readImageData(data : ImageData) -> list[str]: # For searching using images -- 
+async def readImageData(data : ImageData) -> list[MedicineDetails]: # For searching using images -- 
     try:
-        return imageClassifier.read(data.image)
+        return supabase.listToMedicineDetails(imageClassifier.read(data.image))
     except Exception as e:
         print(e)
         return []
 
+@app.post('/order')
+async def placeOrder(req : Request, order : Order):
+    try: 
+        if(req.cookies.get('medicure_auth') == None):
+            raise HTTPException(status_code=400, detail='Invalid User')
+        supabase.placeOrder(token=req.cookies.get('medicure_auth'), order_list=order.order_list)
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail='Order could not be placed either because of invalid user or some other issue')
+    
+@app.get('/order')
+async def getOrders(req : Request, offset : int = 0, limit : int = 15) -> list[PrevOrderModel]:
+    try:
+        if(req.cookies.get('medicure_auth') == None):
+            raise HTTPException(status_code=400, detail='Could not get orders')
+        return supabase.getOrders(req.cookies.get('medicure_auth'), offset=offset, limit=limit)
+    except:
+        return []
 
 if __name__ == '__main__':
     uvicorn.run(app, port=5500)

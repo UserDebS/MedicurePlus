@@ -1,6 +1,7 @@
 from supabase import create_client, Client
-from datatypes import MedicineUploadData, UserData, AuthData, MedicineDetails, MedicineDetailedData
-from service.encryption import strGen, encryption
+from datatypes import MedicineUploadData, UserData, AuthData, MedicineDetails, MedicineDetailedData, OrderItem, PrevOrderModel
+from service.encryption import strGen, encryption, capitalize
+from service.listClassifier import listClassifier
 
 from dotenv import load_dotenv
 from os import getenv
@@ -128,11 +129,29 @@ class Supabase:
             print(e)
             return []
 
-    
-    
+    def listToMedicineDetails(self, med_list : list[str]) -> list[MedicineDetails]:
+        try:
+            return self.__instance.table('medicine_with_details').select('*').in_('name', list(map(capitalize ,med_list))).execute().data
+        except:
+            return []
+
+    def placeOrder(self, token : str, order_list : list[OrderItem]):
+        token = encryption(token)
+        self.__instance.rpc('place_order', {
+            'token_' : token,
+            'order_arr' : list(map(lambda x: {'name' : x.name, 'quantity' : x.quantity},order_list))
+        }).execute()
+
+    def getOrders(self, token : str, offset : int = 0, limit : int = 15) -> list[PrevOrderModel]:
+        return listClassifier(data=self.__instance.rpc('get_orders',  {
+            'token_' : encryption(token),
+            'ofst' : offset,
+            'lmt' : limit
+        }).execute().data)
+
 if __name__ == '__main__': # plan is to fetch the entire data like brands etc using joins and such I am done for today, see you tomorrow :) DS
     s = Supabase()
-    print(s.recommendById(87, 0, 3))
+    print(s.getOrders('r3teb6bHd0PJyJ7DK3TY', 0, 10))
 
     
     
