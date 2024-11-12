@@ -5,6 +5,7 @@ from service.listClassifier import listClassifier
 
 from dotenv import load_dotenv
 from os import getenv
+
 load_dotenv()
 
 class Supabase:
@@ -149,9 +150,10 @@ class Supabase:
             'lmt' : limit
         }).execute().data)
 
+
 if __name__ == '__main__': # plan is to fetch the entire data like brands etc using joins and such I am done for today, see you tomorrow :) DS
     s = Supabase()
-    print(s.getOrders('r3teb6bHd0PJyJ7DK3TY', 0, 10))
+    print(s.recommendById(87, 0, 1))
 
     
     

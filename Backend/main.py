@@ -80,7 +80,7 @@ def register(userdata : UserData, res : Response) -> dict[str, int]:
         raise HTTPException(status_code=409, detail='Account already exists')
 
     
-@app.get('/medicines') # Get all medicines (Done)
+@app.get('/medicines/') # Get all medicines (Done)
 def getMedicines(req : Request, offset : int = 0, limit : int = 20) -> list[MedicineDetails]:
     try:
         if(req.cookies.get('medicure_auth') is None): # plan is to only return list if user is authenticated
