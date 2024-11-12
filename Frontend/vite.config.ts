@@ -5,27 +5,52 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  resolve : {
-    alias : {
-      '@' : path.resolve(__dirname, "./src"),
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, "./src"),
     }
   },
-  server : {
-    port : 3000,
-    proxy : {
-      '/upload' : {
-          target : 'http://127.0.0.1:5500/',
+  server: {
+    port: 3000,
+    proxy: {
+      '/login': {
+        target: 'http://127.0.0.1:5500/',
+        changeOrigin: true,
+        secure: false
+      },
+      '/register': {
+        target: 'http://127.0.0.1:5500/',
+        changeOrigin: true,
+        secure: false
+      },
+      '/suggestions' : {
+        target : 'http://127.0.0.1:5500/',
           changeOrigin : true,
           secure : false
       },
-      '/medicines' : {
+      '/find' : {
         target : 'http://127.0.0.1:5500/',
-        changeOrigin : true,
-        secure : false
+          changeOrigin : true,
+          secure : false
+      },
+      '/order' : {
+        target : 'http://127.0.0.1:5500/',
+          changeOrigin : true,
+          secure : false
+      },
+      '/upload': {
+        target: 'http://127.0.0.1:5500/',
+        changeOrigin: true,
+        secure: false
+      },
+      '/medicines': {
+        target: 'http://127.0.0.1:5500/',
+        changeOrigin: true,
+        secure: false
       }
     },
   },
-  preview : {
-    port : 3000
+  preview: {
+    port: 3000
   }
 })

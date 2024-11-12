@@ -11,15 +11,13 @@ This is our final year project on the use of machine learning in heath industry.
 
 # Project Completion
 
-Create a deadline of project submission in this github to avoid any last time changes.
-
 ## Team Members:
 
-|    Frontend    |     Backend     | Model Designing  |    Database    |
-| :------------: | :-------------: | :-------------:  | :-------------:|
-| Arkabrata Basu |  Souvik Ghosh   |  Souvik Ghosh    | Debmalya Sarkar|
-|   Satwik Das   | Debmalya Sarkar | Debmalya Sarkar  |       --       |
-|    Debayudh    |       --        | Arghadeep Paul   |       --       |
+|    Frontend    |     Backend     | Model Designing |    Database    |
+| :-------------: | :-------------: | :-------------: | :-------------: |
+|   Soham Dutta   |  Souvik Ghosh  |  Souvik Ghosh  | Debmalya Sarkar |
+| Satwik Das(UI) | Debmalya Sarkar | Debmalya Sarkar |       --       |
+| Debmalya Sarkar |       --       | Arghadeep Paul |       --       |
 
 # Project Folder Structure
 
