@@ -5,6 +5,7 @@ import Auth from './Screens/Auth';
 import Home from './Screens/Home';
 import FocusedHome from './Screens/FocusedHome';
 import Register from './Screens/Register';
+import Orders from './Screens/Orders';
 
 
 
@@ -58,6 +59,7 @@ function App() {
             <Route path='signup' element={<Register />} />
             <Route path='home' element={<Home />} />
             <Route path='home/:id' element={<FocusedHome />} />
+            <Route path='history' element={<Orders />} />
             <Route path='*' element={<>Error</>} />
           </Route>
         </Routes>

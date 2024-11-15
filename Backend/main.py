@@ -36,7 +36,7 @@ def authByToken(req : Request, res : Response) -> dict[str, int]:
         if(status.get('status') == 404):
             raise HTTPException(status_code=404, detail='Token does not exist')
         
-        res.set_cookie('medicure_auth', status.get('token'), max_age = 10 * 24 * 3600000)
+        res.set_cookie('medicure_auth', status.get('token'), max_age = 10 * 24 * 3600000, samesite='none', secure=True, httponly=True)
 
         return {
             'status' : 200
@@ -53,7 +53,7 @@ def authByUserPass(authdata : AuthData, res : Response) -> dict[str, int]:
         if(status.get('status') == 404):
             raise HTTPException(status_code=404, detail='Token does not exist')
         
-        res.set_cookie('medicure_auth', status.get('token'), max_age = 10 * 24 * 3600000)
+        res.set_cookie('medicure_auth', status.get('token'), max_age = 10 * 24 * 3600000, samesite='none', secure=True, httponly=True)
 
         return {
             'status' : 200
@@ -70,7 +70,7 @@ def register(userdata : UserData, res : Response) -> dict[str, int]:
         if(status.get('status') == 409):
             raise HTTPException(status_code=409, detail='Account already exists')
           
-        res.set_cookie('medicure_auth', status.get('token'), max_age = 10 * 24 * 3600000)
+        res.set_cookie('medicure_auth', status.get('token'), max_age = 10 * 24 * 3600000, samesite='none', secure=True, httponly=True)
 
         return {
             'status' : 201

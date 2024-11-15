@@ -1,14 +1,21 @@
 import { ChangeEventHandler, FormEventHandler, useState } from "react";
 import { useNavigate } from "react-router";
+import apiFetcher from "@/lib/apiFetcher";
 
 
 const Register = () => {
+    const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [passwordMatch, setPasswordMatch] = useState(true);
     const navigate = useNavigate();
+
   
+    const handleUsernameChange : ChangeEventHandler<HTMLInputElement> = (e) => {
+      setUsername(e.target.value);
+    };
+
     const handleEmailChange : ChangeEventHandler<HTMLInputElement> = (e) => {
       setEmail(e.target.value);
     };
@@ -24,10 +31,12 @@ const Register = () => {
       setPasswordMatch(e.target.value === password);
     };
   
-    const handleSubmit : FormEventHandler<HTMLFormElement> = (e) => {
+    const handleSubmit : FormEventHandler<HTMLFormElement> = async(e) => {
       e.preventDefault();
-      if (passwordMatch) {
-        navigate('/home', { state: { email } });
+      if (passwordMatch) {  
+        await apiFetcher.register(username, email, password).then(_ => {
+          navigate('/home', { state: { email } });   
+        }).catch(_ => _);
       }
     };
   
@@ -36,6 +45,18 @@ const Register = () => {
         <div className="login-box">
           <h2>Register</h2>
           <form onSubmit={handleSubmit}>
+            <div className="input-group">
+              <label htmlFor="username">Enter Username</label>
+              <input
+                type="text"
+                id="username"
+                placeholder="Enter your name"
+                value={username}
+                onChange={handleUsernameChange}
+                style={{ borderColor: '#ddd' }}
+                required
+              />
+            </div>
             <div className="input-group">
               <label htmlFor="email">Enter Email</label>
               <input

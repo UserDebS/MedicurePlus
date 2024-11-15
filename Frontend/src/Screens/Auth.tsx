@@ -1,6 +1,14 @@
-import { ChangeEvent, FormEventHandler, useState } from "react";
+import apiFetcher from "@/lib/apiFetcher";
+import { ChangeEvent, FormEventHandler, useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 
 const Auth = () => {
+    const navigator = useNavigate()
+    useEffect(() => {
+        (async() =>{apiFetcher.authByToken().then(res => {
+            if(res.status == 200) navigator('/home')
+        }).catch(_ => _);})()
+    }, [])
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
@@ -12,8 +20,11 @@ const Auth = () => {
         setPassword(e.target.value);
     };
 
-    const handleSubmit : FormEventHandler<HTMLFormElement> = (e) => {
+    const handleSubmit : FormEventHandler<HTMLFormElement> = async(e) => {
         e.preventDefault();
+        await apiFetcher.authByUserPass(email, password).then(res => {
+            if(res.status === 200) navigator('/home');
+        }).catch(_ => console.log(_))
         console.log('Login Details:', { email, password });
     };
 
@@ -25,7 +36,7 @@ const Auth = () => {
                     <div className="input-group">
                         <label htmlFor="email">Email</label>
                         <input
-                            type="email"
+                            type="text"
                             id="email"
                             placeholder="Enter your email"
                             value={email}
