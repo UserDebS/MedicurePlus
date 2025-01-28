@@ -3,9 +3,9 @@ export interface OrderItem {
     quantity: number
 }
 
-
 interface MedicineData {
     name: string
+    image: string
     cost: number
     available: boolean
     medical_conditions: string[]
@@ -16,6 +16,7 @@ interface MedicineData {
 }
 
 export interface MedicineDetails {
+    image: string
     name: string
     cost: number
     available: boolean

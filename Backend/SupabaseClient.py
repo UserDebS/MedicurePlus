@@ -2,9 +2,12 @@ from supabase import create_client, Client
 from datatypes import MedicineUploadData, UserData, AuthData, MedicineDetails, MedicineDetailedData, OrderItem, PrevOrderModel
 from service.encryption import strGen, encryption, capitalize
 from service.listClassifier import listClassifier
+from service.imageToBase64 import imageToBase64URL
+from service.collectionManager import addDataToDicts, addDataToDict
 
 from dotenv import load_dotenv
 from os import getenv
+import sys
 
 load_dotenv()
 
@@ -93,8 +96,16 @@ class Supabase:
                 'status' : 409
             }
         
-    def recommendById(self, id : int, offset : int, limit : int) -> MedicineDetailedData:
-        data =  self.__instance.table('score_storage').select('med_id1, med_id2').or_(f'med_id1.eq.{id},med_id2.eq.{id}').limit(limit).offset(offset).execute().data
+    def getMedicineWithRecommendationById(self, id : int, offset : int, limit : int) -> MedicineDetailedData:
+        return {
+            'data' : addDataToDict(self.__instance.rpc('get_full_medicine_details', {
+                'med_id' : id
+             }).single().execute().data['data'], 'image', imageToBase64URL),
+            'recommendation' : self.recommendListById(id, offset=offset, limit=limit)
+        }
+    
+    def recommendListById(self, id : int, offset : int, limit : int) -> list[MedicineDetails]:
+        data =  self.__instance.table('score_storage').select('med_id1, med_id2').or_(f'med_id1.eq.{id},med_id2.eq.{id}').order('score', desc=True).limit(limit).offset(offset).execute().data
         def check(c : dict[str, int]):
             if(c['med_id1'] == id):
                 return c['med_id2']
@@ -102,37 +113,34 @@ class Supabase:
                 return c['med_id1']
             
         data = list(map(check, data))
-        data = self.__instance.rpc('medicinedtlfromlist', {
+
+        return addDataToDicts(self.__instance.rpc('medicinedtlfromlist', {
             'data' : data
-        }).execute().data
-        return {
-            'data' : self.__instance.rpc('get_full_medicine_details', {
-                'med_id' : id
-             }).single().execute().data['data'],
-            'recommendation' : data
-        }
+        }).execute().data, 'image', imageToBase64URL)
 
 
     def getAllMedicines(self, offset : int, limit : int) -> list[MedicineDetails]:
         try:
-            return self.__instance.table('medicine_with_details').select('*').limit(limit).offset(offset).execute().data
+            return addDataToDicts(self.__instance.table('medicine_with_details').select('*').limit(limit).offset(offset).execute().data, 'image', imageToBase64URL)
         except:
             return []
     
     def getSearchedMedicines(self, search : str, offset : int, limit : int) -> list[MedicineDetails]:
         try:
-            return self.__instance.rpc('get_searched_medicines', {
+            return addDataToDicts(self.__instance.rpc('get_searched_medicines', {
                 'search' : search,
                 'lmt' : limit,
                 'offst' : offset
-            }).execute().data
+            }).execute().data, 'image', imageToBase64URL)
+
         except Exception as e:
             print(e)
             return []
 
     def listToMedicineDetails(self, med_list : list[str]) -> list[MedicineDetails]:
         try:
-            return self.__instance.table('medicine_with_details').select('*').in_('name', list(map(capitalize ,med_list))).execute().data
+            return addDataToDicts(self.__instance.table('medicine_with_details').select('*').in_('name', list(map(capitalize ,med_list))).execute().data, 'image', imageToBase64URL)
+            
         except:
             return []
 
@@ -144,16 +152,18 @@ class Supabase:
         }).execute()
 
     def getOrders(self, token : str, offset : int = 0, limit : int = 15) -> list[PrevOrderModel]:
-        return listClassifier(data=self.__instance.rpc('get_orders',  {
+        return listClassifier(data = self.__instance.rpc('get_orders',  {
             'token_' : encryption(token),
             'ofst' : offset,
             'lmt' : limit
         }).execute().data)
 
 
+
+
 if __name__ == '__main__': # plan is to fetch the entire data like brands etc using joins and such I am done for today, see you tomorrow :) DS
     s = Supabase()
-    print(s.recommendById(87, 0, 1))
+    print(s.recommendListById(116, 0, 5))
 
     
     

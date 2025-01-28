@@ -7,6 +7,7 @@ def listClassifier(data : list[dict[str, int | float | str]]) -> list[dict]:
         'id' : data[0]['id'],
         'total' : data[0]['cost'] * data[0]['quantity'],
         'placed' : data[0]['placed_at'],
+        'status' : data[0]['status'],
         'orders' : [{
             'name' : data[0]['name'],
             'cost' : data[0]['cost'],
@@ -30,6 +31,7 @@ def listClassifier(data : list[dict[str, int | float | str]]) -> list[dict]:
                 'id' : data[i]['id'],
                 'total' : data[i]['cost'] * data[i]['quantity'],
                 'placed' : data[i]['placed_at'],
+                'status' : data[i]['status'],
                 'orders' : [{
                     'name' : data[i]['name'],
                     'cost' : data[i]['cost'],

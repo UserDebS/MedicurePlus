@@ -92,7 +92,14 @@ def getMedicines(req : Request, offset : int = 0, limit : int = 20) -> list[Medi
 @app.get('/medicines/{id}') # Get a specific medicine (Done)
 def getMedicineById(id : int, offset : int = 0, limit : int = 20) -> MedicineDetailedData:
     try:
-        return supabase.recommendById(id, offset=offset, limit=limit)
+        return supabase.getMedicineWithRecommendationById(id, offset=offset, limit=limit)
+    except:
+        raise HTTPException(status_code=404, detail='Medicine could not be found')
+
+@app.get('/recommendation/{id}')
+def getRecommendationList(id : int, offset : int = 0, limit : int = 20) -> list[MedicineDetails]:
+    try :
+        return supabase.recommendListById(id, offset=offset, limit=limit)
     except:
         raise HTTPException(status_code=404, detail='Medicine could not be found')
 

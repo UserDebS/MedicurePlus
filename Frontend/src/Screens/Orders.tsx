@@ -9,6 +9,7 @@ const Orders = () => {
     }
 
     interface orderlist {
+        status : string
         total : number;
         placed : string;
         orders : sublist[]
@@ -33,9 +34,9 @@ const Orders = () => {
     }, []);
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 py-8">
+        <div className="h-full w-full flex flex-col items-center justify-center min-h-screen bg-gray-100 py-8">
             <h1 className="text-2xl font-bold mb-6">Order List</h1>
-            <div className="w-full max-w-2xl px-4">
+            <div className="h-full w-full max-w-2xl px-4">
                 {loading ? (
                     <p className="text-center text-gray-500">Loading...</p>
                 ) : orders.length > 0 ? (
@@ -45,9 +46,18 @@ const Orders = () => {
                             className="bg-white shadow-md rounded-lg p-4 mb-6"
                         >
                             <div className="mb-4">
-                                <h2 className="text-lg font-semibold">
+                                <h2 className="text-lg font-semibold inline-block mr-2">
                                     Order Placed: {order.placed}
-                                </h2>
+                                </h2> 
+                                <span 
+                                className={"inline-block py-px px-2 rounded-full text-white font-bold text-sm " + ((order.status === 'PENDING')? 
+                                    "bg-red-500" : 
+                                    (order.status === "INPROGRESS")? 
+                                    "bg-yellow-700" : 
+                                    "bg-green-700")}
+                                >
+                                    {order.status}
+                                </span>
                                 <p className="text-gray-500">Total: ${order.total.toFixed(2)}</p>
                             </div>
                             <div className="divide-y">

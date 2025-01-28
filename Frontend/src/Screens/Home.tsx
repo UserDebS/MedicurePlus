@@ -1,29 +1,57 @@
-import Med_Card from "@/components/ui/Card";
+import Med_Card from "@/components/Card";
+import ImageSearch from "@/components/ImageSearch";
+import TextSearch from "@/components/TextSearch";
+import GridShowcase from "@/components/ui/GridShowcase";
 import apiFetcher from "@/lib/apiFetcher";
 import { MedicineDetails } from "@/lib/datatypes";
 import { useEffect, useState } from "react";
 
 const Home = () => {
-    const [medList, setMedList] = useState<MedicineDetails[]>();
-    const fetchData = async() => {
-        await apiFetcher.getAllMedicines(0, 30).then(async(res) =>  {
+    const [medList, setMedList] = useState<MedicineDetails[]>([]);
+    const [offset, setOffset] = useState<number>(0);
+
+    const loadInitialData = async() => {
+        await apiFetcher.getAllMedicines(offset, 20).then(async(res) =>  {
             const data = await res.json();
             setMedList(data);
         }).catch(_ => console.log(_));
     }
+
+    const addNewData = async() => {
+        await apiFetcher.getAllMedicines(offset, 20).then(async(res) =>  {
+            const data = await res.json();
+            setMedList(prev => [...prev, ...data]);
+        }).catch(_ => console.log(_));
+    }
+
     useEffect(() => {
-        fetchData();
-    }, [])
+        loadInitialData();
+    }, []);
+
+    useEffect(() => {
+        addNewData();
+    }, [offset]);
+
     return ( 
-        <div className="h-full w-full flex justify-center items-center flex-wrap gap-2">
-            {
-                medList?.map(data => <Med_Card 
-                    name={data.name} 
-                    cost={data.cost}
-                    available={data.available}
-                    self_url={data.self_url}
-                />)
-            }
+        <div className="w-full h-full overflow-hidden p-2">
+            <div className="w-full h-16 flex justify-end items-center shadow-md rounded-t gap-1 p-2">
+                <TextSearch callback={setMedList}/>
+                <ImageSearch callback={setMedList} />
+            </div>
+            <div className="w-full h-[calc(100%-4rem)]">
+                <GridShowcase setOffset={setOffset}>
+                {
+                    medList?.map(data => <Med_Card
+                        key={data.name}
+                        name={data.name}
+                        cost={data.cost}
+                        available={data.available}
+                        self_url={data.self_url}
+                        image={data.image}
+                    />)
+                }
+                </GridShowcase>
+            </div>
         </div>
      );
 }

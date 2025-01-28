@@ -19,6 +19,7 @@ class MedicineData(BaseModel): # Will be used for getting specific medicine by i
     dosage_forms : list[str]
     side_effects : list[str]
     brand_names : list[str]
+    image : str
 
 class UserData(BaseModel): # for register purpose
     username : str
@@ -26,6 +27,7 @@ class UserData(BaseModel): # for register purpose
     password : str
 
 class MedicineDetails(BaseModel): # for medicine card
+    image: str #base64 url
     name : str
     cost : float
     available : bool
@@ -55,6 +57,7 @@ class PrevOrderItem(BaseModel):
     quantity : int
 
 class PrevOrderModel(BaseModel):
+    status : str
     total : float
     placed : str
     orders : list[PrevOrderItem]

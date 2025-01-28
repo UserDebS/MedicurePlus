@@ -47,6 +47,14 @@ const apiFetcher = (targetroute : string) => {
                 credentials : 'include',
             })
         },
+
+        getRecommendedListByID : async function(id : number, offset : number, limit : number) {
+            return await fetch(targetroute + `recommendation/${id}/?offset=${offset}&limit=${limit}`, {
+                method : 'GET',
+                credentials : 'include'
+            })
+        },
+        
         getSuggestions : async function(search : string) {
             return await fetch(targetroute + `suggestions/?search=${search}`, {
                 method : 'GET',
