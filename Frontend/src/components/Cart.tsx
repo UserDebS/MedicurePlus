@@ -136,7 +136,38 @@ const CartItemCard = ({ name, quantity, cost }: { name: string, quantity: number
 export const CartComponent = (): React.ReactNode => {
     const { state, dispatch } = useCart();
     const [totalCost, setTotalCost] = useState<number>(0);
+    const [locationPermission, setLocationPermission] = useState<boolean>(false);
     const [orderList, setOrderList] = useState<{name : string, quantity : number, cost : number}[]>([]);
+
+    const handleLocationPermission = () => {
+        window.navigator.permissions
+        .query({name : 'geolocation'})
+        .then(permissionStatus => {
+            setLocationPermission(permissionStatus.state === 'granted');
+            if(!(permissionStatus.state === 'granted')) toast(
+                <span className="text-red-500 font-bold">
+                    Enable location to place order!
+                </span>
+            )
+
+            permissionStatus.onchange = () => {
+                if(permissionStatus.state === 'granted') setLocationPermission(true);
+                else setLocationPermission(false);   
+            }
+        })
+        .catch(_ => {
+            toast(
+                <span className="text-red-500 font-bold">
+                    Could't read permission status!
+                </span>
+            )
+        })
+    }
+
+    useEffect(() => {
+
+        handleLocationPermission();
+    }, []);
 
     useEffect(() => {
         const newOrderList: { name: string; quantity: number; cost: number }[] = [];
@@ -156,21 +187,55 @@ export const CartComponent = (): React.ReactNode => {
     }, [state]);
 
     const placeOrder = async() => { //Saved for later
+        if(!locationPermission) {
+            toast(<span className="text-red-500 font-bold">Location permission is required!</span>)
+            return;
+        }
+
         const orders : OrderItem[] = orderList.map(item => ({name : item.name, quantity : item.quantity}));
-        await apiFetcher.addOrder(orders)
-            .then(_ => {
-                toast('Order has been placed');
-                dispatch({type : 'CLEAR'});
-            })
-            .catch(_ => {
-                toast("Order couldn't be placed");
-            });
+        
+        window.navigator.geolocation.getCurrentPosition(async location => {
+            const geolocation = {
+                longitude : location.coords.longitude,
+                latitude : location.coords.latitude
+            }
+
+            await apiFetcher.addOrder(geolocation, orders)
+                .then(res => {
+                    if(res.status == 200){
+                        toast('Order has been placed');
+                        dispatch({type : 'CLEAR'});
+                    } else {
+                        toast(
+                            <span className="text-red-500 font-bold">
+                                Couldn't place order!
+                            </span>
+                        )
+                    }
+                })
+                .catch(_ => {
+                    toast(
+                        <span className="text-red-500 font-bold">
+                            Order couldn't be placed
+                        </span>
+                    );
+                }
+            );
+        },
+        (_) => {
+            toast(
+                <span className="text-red-500 font-bold">
+                    Could't read location!
+                </span>
+            )
+        }
+        );
     }
 
     return (
         <div className="h-full w-80 overflow-hidden rounded-sm p-1 shadow-lg">
             <b className="text-xl">Total Cost : ₹{totalCost.toFixed(2)}</b> <br />
-            <Button className="my-1" onClick={placeOrder}>Place Order</Button>
+            <Button disabled={!locationPermission} className="my-1" onClick={placeOrder}>Place Order</Button>
             <div className="h-full w-full flex-col px-1 py-2 overflow-x-hidden overflow-y-scroll">
                 {
                     orderList.map((item) =>

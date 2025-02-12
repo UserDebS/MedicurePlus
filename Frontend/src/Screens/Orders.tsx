@@ -52,8 +52,10 @@ const Orders = () => {
                                 <span 
                                 className={"inline-block py-px px-2 rounded-full text-white font-bold text-sm " + ((order.status === 'PENDING')? 
                                     "bg-red-500" : 
-                                    (order.status === "INPROGRESS")? 
-                                    "bg-yellow-700" : 
+                                    (order.status === "PACKING")? 
+                                    "bg-orange-500" : 
+                                    (order.status === 'ONTHEWAY')?
+                                    "bg-yellow-500" :
                                     "bg-green-700")}
                                 >
                                     {order.status}

@@ -20,7 +20,13 @@ const Home = () => {
     const addNewData = async() => {
         await apiFetcher.getAllMedicines(offset, 20).then(async(res) =>  {
             const data = await res.json();
-            setMedList(prev => [...prev, ...data]);
+            setMedList(prev => {
+                const newList = [...prev, ...data]
+
+                return Array.from(new Set(newList.map(item => item.name)))
+                    .map(name => newList.find(item => item.name === name));
+            });
+
         }).catch(_ => console.log(_));
     }
 

@@ -27,3 +27,8 @@ export interface MedicineDetailedData {
     data: MedicineData;
     recommendation: MedicineDetails[]
 }
+
+export type Location = {
+    latitude : number,
+    longitude : number
+}

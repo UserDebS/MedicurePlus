@@ -1,4 +1,5 @@
 import { OrderItem } from "./datatypes"
+import { Location } from "./datatypes"
 
 const apiFetcher = (targetroute : string) => {
     return {
@@ -79,7 +80,7 @@ const apiFetcher = (targetroute : string) => {
                 })
             })
         },
-        addOrder : async function(order_list : OrderItem[]) {
+        addOrder : async function(location : Location, order_list : OrderItem[]) {
             return await fetch(targetroute + `order`, {
                 method : 'POST',
                 headers : {
@@ -87,6 +88,7 @@ const apiFetcher = (targetroute : string) => {
                 },
                 credentials : 'include',
                 body : JSON.stringify({
+                    location : location,
                     order_list : order_list
                 })
             })

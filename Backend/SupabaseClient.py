@@ -1,13 +1,14 @@
 from supabase import create_client, Client
-from datatypes import MedicineUploadData, UserData, AuthData, MedicineDetails, MedicineDetailedData, OrderItem, PrevOrderModel
+from threading import Thread
+from dotenv import load_dotenv
+from os import getenv
+
+from datatypes import Location, MedicineUploadData, UserData, AuthData, MedicineDetails, MedicineDetailedData, OrderItem, PrevOrderModel, shopOrDeliveryData
+
 from service.encryption import strGen, encryption, capitalize
 from service.listClassifier import listClassifier
 from service.imageToBase64 import imageToBase64URL
 from service.collectionManager import addDataToDicts, addDataToDict
-
-from dotenv import load_dotenv
-from os import getenv
-import sys
 
 load_dotenv()
 
@@ -144,12 +145,17 @@ class Supabase:
         except:
             return []
 
-    def placeOrder(self, token : str, order_list : list[OrderItem]):
+    def placeOrder(self, token : str, location : Location, order_list : list[OrderItem]) -> int:
+        print(location)
         token = encryption(token)
-        self.__instance.rpc('place_order', {
+        return self.__instance.rpc('place_order', {
             'token_' : token,
+            'location' : {
+                'latitude' : location.latitude,
+                'longitude' : location.longitude
+            },
             'order_arr' : list(map(lambda x: {'name' : x.name, 'quantity' : x.quantity},order_list))
-        }).execute()
+        }).execute().data
 
     def getOrders(self, token : str, offset : int = 0, limit : int = 15) -> list[PrevOrderModel]:
         return listClassifier(data = self.__instance.rpc('get_orders',  {
@@ -158,12 +164,184 @@ class Supabase:
             'lmt' : limit
         }).execute().data)
 
+    def authByShopToken(self, token : str) -> dict[str, int | str]:
+        try:
+            data : dict[str, any] = self.__instance.table('shop_pickup').select('id').eq('token', encryption(token)).single().execute().data
+            newtoken : str = strGen(20)
+            self.__instance.table('shop_pickup').update({'token' : encryption(newtoken)}).eq('id', data.get('id')).execute()
 
+            return {
+                'status' : 200,
+                'token' : newtoken
+            }
+        except:
+            return {
+                'status' : 404
+            }
+        
+    def authByShopID(self, authdata : AuthData) -> dict[str, int | str]:
+        try:
+            authdata.password = encryption(authdata.password)
+            data : dict[str, any] = self.__instance.table('shop_pickup').select('password, salt').eq('email', authdata.email).single().execute().data
+
+            if(data.get('password') != encryption(encryption(data.get('salt')) + authdata.password)):
+                return {'status' : 404}
+            
+            newtoken : str = strGen(20)
+            salt : str = strGen(10)
+            newpass = encryption(encryption(salt) + authdata.password)
+            self.__instance.table('shop_pickup').update({
+                'password' : newpass,
+                'salt' : salt,
+                'token' : encryption(newtoken)
+            }).eq('email', authdata.email).execute()
+
+            return {
+                'status' : 200,
+                'token' : newtoken
+            }
+        except Exception as e:
+            print(e)
+            return {
+                'status' : 404
+            }
+        
+    def shopRegister(self, shopData : shopOrDeliveryData) -> dict[str, str | int]:
+        try: 
+            newtoken : str = strGen(20)
+            salt : str = strGen(10)
+            shopData.authdata.password = encryption(encryption(salt) + encryption(shopData.authdata.password))
+
+            id = self.__instance.rpc("shop_register", {
+                '_email' : shopData.authdata.email,
+                '_password' : shopData.authdata.password,
+                '_salt' : salt,
+                '_token' : encryption(newtoken),
+                '_latitude' : shopData.locationDetails.latitude,
+                '_longitude' : shopData.locationDetails.longitude,
+                '_district' : shopData.locationDetails.district,
+                '_state' : shopData.locationDetails.state,
+                '_country' : shopData.locationDetails.country
+            }).execute().data
+
+            def delivery_allocation(id : int):
+                try:
+                    self.__instance.rpc("shop_to_delivery_allocation", {
+                        "_shop_id" : id
+                    }).execute()
+                except Exception as e:
+                    print('Delivery allocation failed\nError : ', e)
+
+            Thread(target=delivery_allocation, args=(id,)).start()
+
+            return {
+                'status' : 201,
+                'token' : newtoken,
+            }
+
+        except Exception as e:
+            return {
+                'status' : 409,
+                'error' : e
+            }
+        
+    def authByDeliveryToken(self, token : str) -> dict[str, int | str]:
+        try:
+            data : dict[str, any] = self.__instance.table('delivery').select('id').eq('token', encryption(token)).single().execute().data
+            newtoken : str = strGen(20)
+            self.__instance.table('delivery').update({'token' : encryption(newtoken)}).eq('id', data.get('id')).execute()
+
+            return {
+                'status' : 200,
+                'token' : newtoken
+            }
+        except:
+            return {
+                'status' : 404
+            }
+        
+    def authByDeliveryID(self, authdata : AuthData) -> dict[str, int | str]:
+        try:
+            authdata.password = encryption(authdata.password)
+            data : dict[str, any] = self.__instance.table('delivery').select('password, salt').eq('email', authdata.email).single().execute().data
+
+            if(data.get('password') != encryption(encryption(data.get('salt')) + authdata.password)):
+                return {'status' : 404}
+            
+            newtoken : str = strGen(20)
+            salt : str = strGen(10)
+            newpass = encryption(encryption(salt) + authdata.password)
+            self.__instance.table('delivery').update({
+                'password' : newpass,
+                'salt' : salt,
+                'token' : encryption(newtoken)
+            }).eq('email', authdata.email).execute()
+
+            return {
+                'status' : 200,
+                'token' : newtoken
+            }
+        except Exception as e:
+            print(e)
+            return {
+                'status' : 404
+            }
+        
+    def deliveryRegister(self, deliveryData : shopOrDeliveryData) -> dict[str, int | str]:
+        try: 
+            newtoken : str = strGen(20)
+            salt : str = strGen(10)
+            deliveryData.authdata.password = encryption(encryption(salt) + encryption(deliveryData.authdata.password))
+
+            id = self.__instance.rpc("delivery_register", {
+                '_email' : deliveryData.authdata.email,
+                '_password' : deliveryData.authdata.password,
+                '_salt' : salt,
+                '_token' : encryption(newtoken),
+                '_latitude' : deliveryData.locationDetails.latitude,
+                '_longitude' : deliveryData.locationDetails.longitude,
+                '_district' : deliveryData.locationDetails.district,
+                '_state' : deliveryData.locationDetails.state,
+                '_country' : deliveryData.locationDetails.country
+            }).execute().data
+
+            def shop_allocation(id : int):
+                try:
+                    self.__instance.rpc("delivery_to_shop_allocation", {
+                        "_delivery_id" : id
+                    }).execute()
+                except Exception as e:
+                    print('Delivery allocation failed\nError : ', e)
+
+            Thread(target=shop_allocation, args=(id,)).start()
+
+            return {
+                'status' : 201,
+                'token' : newtoken,
+            }
+
+        except Exception as e:
+            return {
+                'status' : 409,
+                'error' : e
+            }
 
 
 if __name__ == '__main__': # plan is to fetch the entire data like brands etc using joins and such I am done for today, see you tomorrow :) DS
     s = Supabase()
-    print(s.recommendListById(116, 0, 5))
+    print(s.shopRegister(shopData=shopOrDeliveryData(**{
+        'authdata' : {
+            'email' : 'admin3',
+            'password' : 'admin3'
+        },
+        'locationDetails' : {
+            'latitude' : 8,
+            'longitude' : 8,
+            'district' : 'admin',
+            'state' : 'admin',
+            'country' : 'admin'
+        }
+    })))
 
     
     

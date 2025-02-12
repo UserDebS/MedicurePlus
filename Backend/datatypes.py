@@ -37,6 +37,17 @@ class AuthData(BaseModel): #For authentication purpose
     email : str
     password : str
 
+class LocationDetails(BaseModel):
+    latitude : float
+    longitude : float
+    district : str
+    state : str
+    country : str
+
+class shopOrDeliveryData(BaseModel): #For shop and delivery registrations only
+    authdata : AuthData
+    locationDetails : LocationDetails
+
 class ImageData(BaseModel): # I will need the base64 url only
     image : str
 
@@ -48,7 +59,12 @@ class OrderItem(BaseModel):
     name : str #medicine name
     quantity : int #medicine quantity
 
+class Location(BaseModel):
+    latitude : float | int
+    longitude : float | int
+
 class Order(BaseModel):
+    location : Location
     order_list : list[OrderItem]
 
 class PrevOrderItem(BaseModel):
@@ -61,4 +77,3 @@ class PrevOrderModel(BaseModel):
     total : float
     placed : str
     orders : list[PrevOrderItem]
-
