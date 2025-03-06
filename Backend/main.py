@@ -1,15 +1,17 @@
-from fastapi import FastAPI, Request, Response, HTTPException, UploadFile, File
+from fastapi import FastAPI, Request, Response, HTTPException, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from threading import Thread
+
 import pickle as pkl
 import os
 
-from datatypes import ImageData, UserData, MedicineDetails, AuthData, MedicineDetailedData, Order, PrevOrderModel, shopOrDeliveryData
+from datatypes import ImageData, UserData, MedicineDetails, AuthData, MedicineDetailedData, Order, PrevOrderModel, shopOrDeliveryData, OrderMedicineData, OrderDetails
 from SupabaseClient import Supabase
 from service.trie import Trie
 from service.imageClassifier import ImageClassifier
 
 import uvicorn
+
+#%% Init
 
 app = FastAPI()
 app.add_middleware(
@@ -25,6 +27,9 @@ pklreader = open(os.path.join(os.path.join(os.path.dirname(__file__), 'model'), 
 trie : Trie = pkl.load(pklreader)
 pklreader.close()
 imageClassifier = ImageClassifier(trie=trie)
+active_connections : set[WebSocket] = set()
+
+#%% Customer endpoints
 
 @app.get('/login') #done
 def authByToken(req : Request, res : Response) -> dict[str, int]:
@@ -132,7 +137,7 @@ async def placeOrder(req : Request, order : Order):
         if(req.cookies.get('medicure_auth') == None):
             raise HTTPException(status_code=400, detail='Invalid User')
         
-        id = supabase.placeOrder(token=req.cookies.get('medicure_auth'), location=order.location, order_list=order.order_list)
+        supabase.placeOrder(token=req.cookies.get('medicure_auth'), location=order.location, order_list=order.order_list)
 
     except Exception as e:
         print(e)
@@ -147,7 +152,7 @@ async def getOrders(req : Request, offset : int = 0, limit : int = 15) -> list[P
     except:
         return []
     
-#%%
+#%% Shop endpoints
 
 @app.get('/shops/login') #login for shops by cookies
 async def authByShopToken(req : Request, res : Response) -> dict[str, int]:
@@ -201,9 +206,82 @@ async def shopRegister(shopData : shopOrDeliveryData, res : Response) -> dict[st
     
     except:
         raise HTTPException(status_code=409, detail='Account already exists')
+
+@app.get('/shops/orders/{orderId}')
+def getOrderMedicines(orderId : int, req : Request) -> list[OrderMedicineData]:
+    try:
+        if(req.cookies.get('medicure_shop_auth') == None):
+            raise HTTPException(status_code=404, detail='Token does not exist')
+        return supabase.getOrderMedicineData(req.cookies.get('medicure_shop_auth'), orderId)
+            
+    except:
+        raise HTTPException(status_code=404, detail='Token or order id does not exist')
     
-# I will need to create a websocket that will get orders dynamically when new orders will be placed.
+@app.get('/shops/orders')
+def getPendingShopOrders(req : Request) -> list[OrderDetails]:
+    try:
+        if(req.cookies.get('medicure_shop_auth') == None):
+            raise HTTPException(status_code=404, detail='Token does not exist')
+        
+        return supabase.getPendingShopOrders(req.cookies.get('medicure_shop_auth'))
+    except:
+        raise HTTPException(status_code=404, detail='Token does not exist')
+    
+#%% Delivery endpoints
 
+@app.get('/deliveries/login')
+async def authByDeliveryToken(req : Request, res : Response) -> dict[str, str | int]:
+    try:
+        if(req.cookies.get('medicure_delivery_auth') == None):
+            raise HTTPException(status_code=404, detail='Token does not exist')
 
+        status = supabase.authByDeliveryToken(req.cookies.get('medicure_delivery_auth'))
+
+        if(status.get('status') == 404):
+            raise HTTPException(status_code=404, detail='Token does not exist')
+        
+        res.set_cookie('medicure_delivery_auth', status.get('token'), max_age = 10 * 24 * 3600000, samesite='none', secure=True, httponly=True)
+
+        return {
+            'status' : 200
+        }
+    
+    except:
+        raise HTTPException(status_code=404, detail='Token does not exist')
+
+@app.post('/deliveries/login')
+async def authByDeliveryID(authData : AuthData, res : Response) -> dict[str, str | int]:
+    try:
+        status = supabase.authByDeliveryID(authData)
+
+        if(status.get('status') == 404):
+            raise HTTPException(status_code=404, detail='Shop does not exist')
+        
+        res.set_cookie('medicure_delivery_auth', status.get('token'), max_age = 10 * 24 * 3600000, samesite='none', secure=True, httponly=True)
+
+        return {
+            'status' : 200
+        }
+    except:
+        raise HTTPException(status_code=404, detail='Token does not exist')
+
+@app.post('/deliveries/register')
+async def deliveryRegister(deliveryData : shopOrDeliveryData, res : Response) -> dict[str, str | int]:
+    try:
+        status = supabase.deliveryRegister(deliveryData=deliveryData)
+
+        if(status.get('status') == 409):
+            raise HTTPException(status_code=409, detail='Account already exists')
+          
+        res.set_cookie('medicure_delivery_auth', status.get('token'), max_age = 10 * 24 * 3600000, samesite='none', secure=True, httponly=True)
+
+        return {
+            'status' : 201
+        }
+    
+    except:
+        raise HTTPException(status_code=409, detail='Account already exists')
+
+#%% Main Function
 if __name__ == '__main__':
     uvicorn.run(app, port=5500)

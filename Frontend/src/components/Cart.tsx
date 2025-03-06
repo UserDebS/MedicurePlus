@@ -89,7 +89,6 @@ export const useCart = () => {
 
 const CartItemCard = ({ name, quantity, cost }: { name: string, quantity: number, cost: number }) => {
     const { dispatch } = useCart();
-    if (name.length > 20) name = name.substring(0, 20);
 
     const changeQuantity = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newQuantity: number = (e.target.value === '') ? 0 : Number.parseInt(e.target.value);
@@ -117,7 +116,11 @@ const CartItemCard = ({ name, quantity, cost }: { name: string, quantity: number
         <div key={name} className="w-full h-auto max-h-20 bg-white rounded p-1 border-2 overflow-hidden">
             <div className="w-full h-full flex justify-between items-start">
                 <div className="h-full w-1/2">
-                    <h3 className="font-bold">{name}</h3>
+                    <h3 className="font-bold">{
+                        (name.length > 10) ? 
+                        name.substring(0, 10) + "..." :
+                        name
+                    }</h3>
                     <b>Cost: ₹{cost}</b>
                 </div>
                 <div className="h-full w-1/2 flex justify-end items-center gap-1">

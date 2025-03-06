@@ -1,14 +1,16 @@
-from supabase import create_client, Client
+from supabase import create_client, Client, AClient, acreate_client
 from threading import Thread
 from dotenv import load_dotenv
 from os import getenv
 
-from datatypes import Location, MedicineUploadData, UserData, AuthData, MedicineDetails, MedicineDetailedData, OrderItem, PrevOrderModel, shopOrDeliveryData
+from datatypes import Location, MedicineUploadData, UserData, AuthData, MedicineDetails, MedicineDetailedData, OrderItem, PrevOrderModel, shopOrDeliveryData, OrderMedicineData, OrderDetails
 
 from service.encryption import strGen, encryption, capitalize
 from service.listClassifier import listClassifier
 from service.imageToBase64 import imageToBase64URL
 from service.collectionManager import addDataToDicts, addDataToDict
+
+import json
 
 load_dotenv()
 
@@ -145,17 +147,16 @@ class Supabase:
         except:
             return []
 
-    def placeOrder(self, token : str, location : Location, order_list : list[OrderItem]) -> int:
-        print(location)
+    def placeOrder(self, token : str, location : Location, order_list : list[OrderItem]):
         token = encryption(token)
-        return self.__instance.rpc('place_order', {
+        self.__instance.rpc('place_order', {
             'token_' : token,
             'location' : {
                 'latitude' : location.latitude,
                 'longitude' : location.longitude
             },
             'order_arr' : list(map(lambda x: {'name' : x.name, 'quantity' : x.quantity},order_list))
-        }).execute().data
+        }).execute()
 
     def getOrders(self, token : str, offset : int = 0, limit : int = 15) -> list[PrevOrderModel]:
         return listClassifier(data = self.__instance.rpc('get_orders',  {
@@ -325,23 +326,45 @@ class Supabase:
                 'status' : 409,
                 'error' : e
             }
+        
+    def getOrderMedicineData(self, token : str, orderId : int) -> list[OrderMedicineData]:
+        return list(map(
+            lambda x: OrderMedicineData(**{
+                'medicineName' : x['medicine_name'],
+                'medicineQuantity' : x['medicine_quantity']
+            }),
+            self.__instance.rpc(
+            'getordermedicinedata',
+            {
+                '_token' : encryption(token),
+                '_order_id' : orderId
+            }
+        ).execute().data))
+    
+    def getPendingShopOrders(self, token : str) -> list[OrderDetails]:
+        return list(map(
+            lambda x: OrderDetails(**{
+                'orderId' : x['_order_id'],
+                'distance' : x['_distance'],
+                'locationLink' : x['_link'],
+                'medicineData' : json.loads(x['_medicine_data'])
+            }),
+            self.__instance.rpc(
+                'getpendingshoporders',
+                {
+                    '_token' : encryption(token)
+                }
+            ).execute().data
+        ))
+
+
 
 
 if __name__ == '__main__': # plan is to fetch the entire data like brands etc using joins and such I am done for today, see you tomorrow :) DS
     s = Supabase()
-    print(s.shopRegister(shopData=shopOrDeliveryData(**{
-        'authdata' : {
-            'email' : 'admin3',
-            'password' : 'admin3'
-        },
-        'locationDetails' : {
-            'latitude' : 8,
-            'longitude' : 8,
-            'district' : 'admin',
-            'state' : 'admin',
-            'country' : 'admin'
-        }
-    })))
+    print(s.getPendingShopOrders(
+        token='·}ªr¯vE¦ªxw¥qr',
+    ))
 
     
     

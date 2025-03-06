@@ -36,7 +36,7 @@ const Orders = () => {
     return (
         <div className="h-full w-full flex flex-col items-center justify-center min-h-screen bg-gray-100 py-8">
             <h1 className="text-2xl font-bold mb-6">Order List</h1>
-            <div className="h-full w-full max-w-2xl px-4">
+            <div className="h-full w-full max-w-2xl px-4 overflow-x-hidden overflow-y-auto">
                 {loading ? (
                     <p className="text-center text-gray-500">Loading...</p>
                 ) : orders.length > 0 ? (
@@ -60,7 +60,7 @@ const Orders = () => {
                                 >
                                     {order.status}
                                 </span>
-                                <p className="text-gray-500">Total: ${order.total.toFixed(2)}</p>
+                                <p className="text-gray-500">Total: ₹{order.total.toFixed(2)}</p>
                             </div>
                             <div className="divide-y">
                                 {order.orders.map((item, idx) => (
@@ -71,7 +71,7 @@ const Orders = () => {
                                                 Quantity: {item.quantity}
                                             </p>
                                         </div>
-                                        <p className="text-gray-700">${item.cost.toFixed(2)}</p>
+                                        <p className="text-gray-700">₹{item.cost.toFixed(2)}</p>
                                     </div>
                                 ))}
                             </div>

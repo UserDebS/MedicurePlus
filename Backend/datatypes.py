@@ -77,3 +77,13 @@ class PrevOrderModel(BaseModel):
     total : float
     placed : str
     orders : list[PrevOrderItem]
+
+class OrderMedicineData(BaseModel):
+    medicineName : str
+    medicineQuantity : int
+
+class OrderDetails(BaseModel):
+    orderId : int
+    distance : float
+    locationLink : str
+    medicineData : list[OrderMedicineData]

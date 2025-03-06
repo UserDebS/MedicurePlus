@@ -41,7 +41,7 @@ const Register = () => {
     };
   
     return (
-      <div className="login-container">
+      <div className="login-container w-full">
         <div className="login-box">
           <h2>Register</h2>
           <form onSubmit={handleSubmit}>

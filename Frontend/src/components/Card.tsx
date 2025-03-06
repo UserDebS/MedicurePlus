@@ -9,8 +9,6 @@ const Med_Card = ({ name, cost, available, self_url, image }: { name: string, co
     const [quantity, setQuantity] = useState<number>(0);
     let totalPrice: number = quantity * cost;
 
-    if (name.length > 10) name = name.substring(0, 10) + "...";
-
     const handleChange: ChangeEventHandler<HTMLInputElement> = (e) => {
         if (e.target.value == '') {
             setQuantity(0);
@@ -40,7 +38,13 @@ const Med_Card = ({ name, cost, available, self_url, image }: { name: string, co
             <div className="w-full h-1/2 flex justify-between items-center">
                 <div className="w-1/2 h-full p-2">
                     <Link to={self_url}>
-                        <h3 className="text-blue-900 font-bold text-xl hover:underline cursor-pointer">{name}</h3>
+                        <h3 className="text-blue-900 font-bold text-xl hover:underline cursor-pointer">
+                            {
+                            (name.length > 10)?
+                            name.substring(0, 10) + "..." : 
+                            name
+                            }
+                        </h3>
                     </Link>
                     <p className={"inline-block px-2 rounded-full font-bold text-white " + (
                         (available) ? "bg-green-500" : "bg-red-500"
