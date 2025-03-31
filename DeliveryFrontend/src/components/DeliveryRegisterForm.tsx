@@ -3,6 +3,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
 import apiFetcher from "../lib/apiFetcher";
+import { useAuth } from "../lib/authContext";
 
 const DeliveryRegisterForm = () => {
     const [email, setEmail] = useState<string>('');
@@ -15,6 +16,7 @@ const DeliveryRegisterForm = () => {
     const [longitude, setLongitude] = useState<number | null>(null);
 
     const [locationPermission, setLocationPermission] = useState<boolean>(false);
+    const {setDeliveryValidationTrue} = useAuth();
 
     const handleSubmit : React.FormEventHandler<HTMLFormElement> = async(event) => {
         event.preventDefault();
@@ -62,7 +64,6 @@ const DeliveryRegisterForm = () => {
             return;
         }
 
-
         //Register logic
 
         await apiFetcher.deliveryRegister({
@@ -86,6 +87,8 @@ const DeliveryRegisterForm = () => {
                         Account has been created!
                     </span>
                 );
+                //Navigation will be handled by Auth.tsx
+                setDeliveryValidationTrue();
             } else {
                 toast(
                     <span className="font-bold text-red-500">

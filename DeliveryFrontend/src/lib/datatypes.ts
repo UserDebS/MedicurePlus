@@ -34,3 +34,11 @@ export enum AuthType{
     DeliveryRegister,
     DeliveryLogin
 }
+
+export type AcceptedOrderDetails = { 
+    orderId : number,
+    distance : number,
+    locationLink : string,
+    medicineData : OrderMedicineData[],
+    orderToken : string
+}

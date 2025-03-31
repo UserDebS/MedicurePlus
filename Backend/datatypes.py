@@ -87,3 +87,10 @@ class OrderDetails(BaseModel):
     distance : float
     locationLink : str
     medicineData : list[OrderMedicineData]
+
+class AcceptedOrderDetails(BaseModel):
+    orderId : int
+    distance : float
+    locationLink : str
+    medicineData : list[OrderMedicineData]
+    orderToken : str

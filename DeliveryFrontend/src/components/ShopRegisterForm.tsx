@@ -3,6 +3,7 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
 import apiFetcher from "../lib/apiFetcher";
+import { useAuth } from "../lib/authContext";
 
 const ShopRegisterForm = () => {
     const [email, setEmail] = useState<string>('');
@@ -15,6 +16,7 @@ const ShopRegisterForm = () => {
     const [longitude, setLongitude] = useState<number | null>(null);
 
     const [locationPermission, setLocationPermission] = useState<boolean>(false);
+    const {setShopValidationTrue} = useAuth();
 
     const handleSubmit : React.FormEventHandler<HTMLFormElement> = async(event) => {
         event.preventDefault();
@@ -62,7 +64,6 @@ const ShopRegisterForm = () => {
             return;
         }
 
-
         //Register logic
 
         await apiFetcher.shopRegister({
@@ -81,11 +82,13 @@ const ShopRegisterForm = () => {
         .then(res => res.json())
         .then(res => {
             if(res.status === 201) {
+                // Successful registration! Navigation will be handle by Auth.tsx
                 toast(
                     <span className="font-bold text-green-500">
                         Account has been created!
                     </span>
                 );
+                setShopValidationTrue();
             } else {
                 toast(
                     <span className="font-bold text-red-500">

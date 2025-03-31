@@ -1,20 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { LinkedList } from "../lib/dataStructures";
-import { subscribeChannel } from "../lib/supabaseClient";
-import { RealtimeChannel } from "@supabase/supabase-js";
-import { toast } from "sonner";
-import distance from "../lib/distance";
-import apiFetcher from "../lib/apiFetcher";
-import { AcceptedOrderDetails, OrderDetails, OrderMedicineData } from "../lib/datatypes";
 import { useAuth } from "../lib/authContext";
 import MedicineListModal from "./MedicineListModal";
+import { RealtimeChannel } from "@supabase/supabase-js";
+import { LinkedList } from "../lib/dataStructures";
+import { AcceptedOrderDetails, OrderDetails, OrderMedicineData } from "../lib/datatypes";
+import { toast } from "sonner";
 import OrderListItem from "./OrderListItem";
-import AcceptedOrderListItem from "./AcceptedOrderListItem";
+import distance from "../lib/distance";
+import { subscribeChannel } from "../lib/supabaseClient";
+import apiFetcher from "../lib/apiFetcher";
 
-const OrderLister = () => {
-    // Util States
+const DeliveryOrderLister = () => {
     const channelRef = useRef<RealtimeChannel | null>(null);
-    const {shopValidated} = useAuth();
+    const {deliveryValidated} = useAuth();
     const [locationPermission, setLocationPermission] = useState<boolean>(false);
     const [hide, setHide] = useState<boolean>(true);
 
@@ -69,6 +67,7 @@ const OrderLister = () => {
         handleLocationPermission();
     }, []);
 
+
     // State Bug fix
     useEffect(() => {
         frontOrderListRef.current = frontOrderList;
@@ -78,11 +77,11 @@ const OrderLister = () => {
     // Start Up Set Up
     useEffect(() => {
         if(!locationPermission) return;
-        if(!shopValidated) return;
+        if(!deliveryValidated) return;
 
         // Load start up pending orders
         const getOrderedMedicineDataColdStart = async() => {
-            await apiFetcher.getOrders()
+            await apiFetcher.getPendingDeliveryOrders()
                 .then(async (res) => {
                     const data : OrderDetails[] = await res.json();
                     const newFrontList = frontOrderList.copy();
@@ -105,7 +104,7 @@ const OrderLister = () => {
 
         // Load start up accepted orders
         const getAcceptedMedicineDataColdStart = async() => {
-            await apiFetcher.getAcceptedOrders()
+            await apiFetcher.getAcceptedDeliveryOrders()
                 .then(res => {
                     if(res.ok) return res;
                     else throw new Error('Could not fetch Accepted Order Details')
@@ -132,6 +131,8 @@ const OrderLister = () => {
             getOrderedMedicineDataColdStart();
             getAcceptedMedicineDataColdStart();
 
+            return;
+            
             console.log('Setting up channel');
             channelRef.current = subscribeChannel(
                 'order_queue',
@@ -244,63 +245,13 @@ const OrderLister = () => {
                 }
             );
         }
-    }, [locationPermission, shopValidated]);
-
+    }, [locationPermission, deliveryValidated]);
 
     const handleOrderViewRequest = (medicineData : OrderMedicineData[]) => {
         setMedicinedata(medicineData);
         setHide(false);
     }
 
-    const handleAcceptOrder = async (orderId : number) => {
-        await apiFetcher.acceptOrder(orderId)  
-        .then(res => res.json())
-        .then(res => {
-            if(res.status === 200) {
-                // State logic
-                const newFrontList = frontOrderList.copy();
-                const data : OrderDetails | null = newFrontList.deleteData({
-                    orderId : orderId,
-                    distance : -1,
-                    locationLink : '',
-                    medicineData : []
-                });
-
-                if(data === null) {
-                    throw new Error('Invalid Order');
-                }
-
-                setAcceptedOrders(prevOrders => [...prevOrders, {...data, orderToken : res.order_token}]);
-            } else throw new Error('Could not Accept Order');
-        })
-        .catch(err => toast(
-            <span>
-                Couldn't accept order <br />
-                {err}
-            </span>
-        ));
-    }
-
-    // Reject Order After Accidentally Accepting it
-    const handleRejectOrder = async (orderId : number) => {
-        await apiFetcher.removeOrder(orderId)  
-        .then(res => res.json())
-        .then(res => {
-            if(res.status === 200) {
-                // State logic
-                setAcceptedOrders(prevList => [...prevList.filter(item => item.orderId !== orderId)]);
-
-            } else throw new Error('Order cancellation failed');
-        })
-        .catch(err => toast(
-            <span>
-                Couldn't reject order <br />
-                {err}
-            </span>
-        ));
-    }
-
-    // Remove order from "Front Order List"
     const handleRemoveOrder = (orderId : number) => {
         setFrontOrderList(prevList => {
             const newFrontList = prevList.copy();
@@ -316,8 +267,57 @@ const OrderLister = () => {
         });
     }
 
-    const handleOrderDeliveryHandOver = (orderId : number, orderToken : string) => {
+    const handleAcceptOrder = async (orderId : number) => {
+        await apiFetcher.acceptDeliveryOrder(orderId)
+            .then(res => {
+                if(res.ok) return res.json();
+                else throw new Error('Could not Accept Order');
+            })
+            .then(res => {
+                if(res.status === 200) {
+                    // State logic
+                    const newFrontList = frontOrderList.copy();
+                    const data : OrderDetails | null = newFrontList.deleteData({
+                        orderId : orderId,
+                        distance : -1,
+                        locationLink : '',
+                        medicineData : []
+                    });
+    
+                    if(data === null) {
+                        throw new Error('Invalid Order');
+                    }
+    
+                    setAcceptedOrders(prevOrders => [...prevOrders, {...data, orderToken : res.order_token}]);
+                } else throw new Error('Could not Accept Order');
+            })
+            .catch(err => toast(
+                <span>
+                    Couldn't accept order <br />
+                    {err}
+                </span>
+            ));
+    }
 
+    const handleRejectOrder = async (orderId : number) => {
+        await apiFetcher.rejectDeliveryOrder(orderId)
+            .then(res => {
+                if(res.ok) return res.json();
+                else throw new Error('Order cancellation failed');
+            })
+            .then(res => {
+                if(res.status === 200) {
+                    // State logic
+                    setAcceptedOrders(prevList => [...prevList.filter(item => item.orderId !== orderId)]);
+    
+                } else throw new Error('Order cancellation failed');
+            })
+            .catch(err => toast(
+                <span>
+                    Couldn't reject order <br />
+                    {err}
+                </span>
+            ));
     }
 
     return ( 
@@ -385,4 +385,4 @@ const OrderLister = () => {
     );
 }
  
-export default OrderLister;
+export default DeliveryOrderLister;

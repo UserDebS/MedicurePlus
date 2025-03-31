@@ -27,6 +27,31 @@ export default defineConfig({
         changeOrigin : true,
         secure : false
       },
+      'shops/accepted/orders' : {
+        target : 'http://127.0.0.1:5500/',
+        changeOrigin : true,
+        secure : false
+      },
+      'shops/rejected/orders' : {
+        target : 'http://127.0.0.1:5500/',
+        changeOrigin : true,
+        secure : false
+      },
+      'deliveries/orders' : {
+        target : 'http://127.0.0.1:5500/',
+        changeOrigin : true,
+        secure : false
+      },
+      'deliveries/accepted/orders' : {
+        target : 'http://127.0.0.1:5500/',
+        changeOrigin : true,
+        secure : false
+      },
+      'deliveries/rejected/orders' : {
+        target : 'http://127.0.0.1:5500/',
+        changeOrigin : true,
+        secure : false
+      },
     }
   },
 })

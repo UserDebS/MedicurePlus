@@ -3,10 +3,13 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import apiFetcher from "../lib/apiFetcher";
 import { useState } from "react";
+import { useAuth } from "../lib/authContext";
 
 const DeliveryLoginForm = () => {
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
+
+    const {setDeliveryValidationTrue} = useAuth();
 
     const handleSubmit : React.FormEventHandler<HTMLFormElement> = (event) => {
         event.preventDefault();
@@ -31,6 +34,8 @@ const DeliveryLoginForm = () => {
                         Login successful!
                     </span>
                 );
+                //Navigation will be handled by Auth.tsx
+                setDeliveryValidationTrue();
             } else {
                 console.log(res);
                 toast(<span className="font-bold text-red-500">

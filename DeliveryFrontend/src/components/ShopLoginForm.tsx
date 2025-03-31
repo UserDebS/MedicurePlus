@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 import apiFetcher from "../lib/apiFetcher";
+import { useAuth } from "../lib/authContext";
 
 const ShopLoginForm = () => {
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
+
+    const {setShopValidationTrue} = useAuth();
 
     const handleSubmit : React.FormEventHandler<HTMLFormElement> = (event) => {
         event.preventDefault();
@@ -31,6 +34,9 @@ const ShopLoginForm = () => {
                         Login successful!
                     </span>
                 );
+
+                //Navigation will be handled by Auth.tsx
+                setShopValidationTrue();
             } else {
                 console.log(res);
                 toast(<span className="font-bold text-red-500">
@@ -44,6 +50,10 @@ const ShopLoginForm = () => {
             </span>);
         });
     }
+
+    useEffect(() => {
+
+    }, []);
 
     return (
         <form className="h-full w-full p-2" onSubmit={handleSubmit}>

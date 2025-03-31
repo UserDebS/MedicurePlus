@@ -2,6 +2,8 @@ import { AuthData, shopOrDeliveryData } from "./datatypes";
 
 const apiFetcher = (targetRoute : string) => {
     return {
+        // Authentication
+
         authByShopToken : async function() {
             return await fetch(
                 targetRoute + 'shops/login', 
@@ -116,6 +118,8 @@ const apiFetcher = (targetRoute : string) => {
             );
         },
 
+        // Shop orders
+
         getOrders : async function() {// one time use function, will get 30 the pending orders in one go
             return await fetch(
                 targetRoute + 'shops/orders',
@@ -142,16 +146,13 @@ const apiFetcher = (targetRoute : string) => {
             orderId : number
         ) { //There will be a section for accepted orders
             return await fetch(
-                targetRoute + 'shops/orders/accept',
+                targetRoute + `shops/accepted/orders/${orderId}`,
                 {
-                    method : 'POST',
+                    method : 'PUT',
                     headers : {
                         "Content-Type": "application/json"
                     },
                     credentials : 'include',
-                    body : JSON.stringify({
-                        'orderId' : orderId
-                    })
                 }
             );
         },
@@ -160,25 +161,80 @@ const apiFetcher = (targetRoute : string) => {
             orderId : number
         ) { //Accidentally accepted orders can be removed later
             return await fetch(
-                targetRoute + 'shops/orders/reject',
+                targetRoute + `shops/rejected/orders/${orderId}`,
                 {
-                    method : 'POST',
+                    method : 'DELETE',
                     headers : {
                         "Content-Type": "application/json"
                     },
                     credentials : 'include',
-                    body : JSON.stringify({
-                        'orderId' : orderId
-                    })
                 }
             );
         },
 
         getAcceptedOrders : async function() {
             return await fetch(
-                targetRoute + 'shops/orders/accept',
+                targetRoute + 'shops/accepted/orders',
                 {
                     method : 'GET',
+                    credentials : 'include'
+                }
+            );
+        },
+
+        // Delivery Orders
+
+        getPendingDeliveryOrders : async function() {
+            return await fetch(
+                targetRoute + 'deliveries/orders',
+                {
+                    method : 'GET',
+                    credentials : 'include'
+                }
+            );
+        },
+
+        getDeliveryMedicineData : async function(
+            orderId : number
+        ) {
+            return await fetch(
+                targetRoute + `deliveries/orders/${orderId}`,
+                {
+                    method : 'GET',
+                    credentials : 'include'
+                }
+            );
+        },
+
+        getAcceptedDeliveryOrders : async function() {
+            return await fetch(
+                targetRoute + 'deliveries/accepted/orders',
+                {
+                    method : 'GET',
+                    credentials : 'include'
+                }
+            );
+        },
+
+        acceptDeliveryOrder : async function (
+            orderId : number
+        ) {
+            return await fetch(
+                targetRoute + `deliveries/accepted/orders/${orderId}`,
+                {
+                    method : 'PUT',
+                    credentials : 'include'
+                }
+            );
+        },
+
+        rejectDeliveryOrder : async function (
+            orderId : number
+        ) {
+            return await fetch(
+                targetRoute + `deliveries/rejected/orders/${orderId}`,
+                {
+                    method : 'DELETE',
                     credentials : 'include'
                 }
             );

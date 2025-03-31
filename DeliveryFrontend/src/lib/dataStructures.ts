@@ -89,10 +89,12 @@ export class LinkedList<T> {
         ++this.size;
     }
 
-    public deleteData(data : T) {
-        if(this.headNode === null) return;
+    public deleteData(data : T) : T | null {
+        if(this.headNode === null) return null;
         
         if(this.compareTo(this.headNode.getData(), data)) {
+            const deletedData = this.headNode.getData();
+
             this.headNode = this.headNode.nextNode;
 
             if(this.headNode === null) {
@@ -100,11 +102,16 @@ export class LinkedList<T> {
             }
 
             --this.size;
+
+            return deletedData;
         } else {
             let temp : Node<T> = this.headNode!;
             while(temp.nextNode !== null && !this.compareTo(temp.nextNode.getData(), data)) temp = temp.nextNode;
 
+            let deletedData : T | null = null;
+
             if(temp.nextNode !== null) {
+                deletedData = temp.nextNode.getData();
                 temp.nextNode = temp.nextNode.nextNode;
                 --this.size;
             }
@@ -112,7 +119,10 @@ export class LinkedList<T> {
             if(temp.nextNode === null) {
                 this.lastNode = temp;
             }
+
+            return deletedData;
         }
+
     }
 
     public updateData(data : T) {

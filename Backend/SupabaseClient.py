@@ -3,7 +3,7 @@ from threading import Thread
 from dotenv import load_dotenv
 from os import getenv
 
-from datatypes import Location, MedicineUploadData, UserData, AuthData, MedicineDetails, MedicineDetailedData, OrderItem, PrevOrderModel, shopOrDeliveryData, OrderMedicineData, OrderDetails
+from datatypes import AcceptedOrderDetails, Location, MedicineUploadData, UserData, AuthData, MedicineDetails, MedicineDetailedData, OrderItem, PrevOrderModel, shopOrDeliveryData, OrderMedicineData, OrderDetails
 
 from service.encryption import strGen, encryption, capitalize
 from service.listClassifier import listClassifier
@@ -356,9 +356,144 @@ class Supabase:
                 }
             ).execute().data
         ))
+    
+    def getAcceptedOrders(self, token : str) -> list[AcceptedOrderDetails]:
+        return list(map(
+            lambda x: AcceptedOrderDetails(**{
+                'orderId' : x['_order_id'],
+                'distance' : x['_distance'],
+                'locationLink' : x['_link'],
+                'medicineData' : json.loads(x['_medicine_data']),
+                'orderToken' : x['_order_token']
+            }),
+            self.__instance.rpc(
+            'get_accepted_orders',
+            params={
+                "_token" : encryption(token)
+            }
+        ).execute().data))
 
+    def acceptOrder(self, orderId : int, token : str) -> dict[str, int | str]:
+        try:
+            generatedToken : str = strGen(6)
 
+            self.__instance.rpc(
+                'accept_order_by_id',
+                params={
+                    '_order_id' : orderId,
+                    '_token' : encryption(token),
+                    '_generated_token' : generatedToken
+                }
+            ).execute()
 
+            return {
+                'status' : 200,
+                'order_token' : generatedToken
+            }
+        except Exception as e:
+            print(e)
+            raise e
+
+    def rejectOrder(self, orderId : int, token : str) -> dict[str, int]:
+        try:
+            self.__instance.rpc(
+                'reject_order_by_id',
+                params={
+                    '_order_id' : orderId,
+                    '_token' : encryption(token)
+                }
+            ).execute()
+
+            return {
+                'status' : 200
+            }
+        except Exception as e:
+            print(e)
+            raise Exception('Something went wrong')
+        
+    def getPendingDeliveryOrders(self, token : str) -> list[OrderDetails]:
+        return list(map(
+            lambda x: OrderDetails(**{
+                'orderId' : x['_order_id'],
+                'distance' : x['_distance'],
+                'locationLink' : x['_link'],
+                'medicineData' : json.loads(x['_medicine_data'])
+            }),
+            self.__instance.rpc(
+                'get_pending_delivery_orders',
+                {
+                    '_token' : encryption(token)
+                }
+            ).execute().data
+        ))
+
+    def getDeliveryOrderMedicineData(self, token : str, orderId : int) -> list[OrderMedicineData]:
+        return list(map(
+            lambda x: OrderMedicineData(**{
+                'medicineName' : x['medicine_name'],
+                'medicineQuantity' : x['medicine_quantity']
+            }),
+            self.__instance.rpc(
+            'get_delivery_order_medicine_data',
+            {
+                '_token' : encryption(token),
+                '_order_id' : orderId
+            }
+        ).execute().data))
+
+    def getAcceptedDeliveryOrders(self, token : str) -> list[AcceptedOrderDetails]:
+        return list(map(
+            lambda x: AcceptedOrderDetails(**{
+                'orderId' : x['_order_id'],
+                'distance' : x['_distance'],
+                'locationLink' : x['_link'],
+                'medicineData' : json.loads(x['_medicine_data']),
+                'orderToken' : x['_order_token']
+            }),
+            self.__instance.rpc(
+            'get_accepted_delivery_orders',
+            params={
+                "_token" : encryption(token)
+            }
+        ).execute().data))
+
+    def acceptDeliveryOrder(self, token : str, orderId : int) -> dict[str, int | str]:
+        try:
+            generatedToken : str = strGen(6)
+
+            self.__instance.rpc(
+                'accept_delivery_order_by_id',
+                params={
+                    '_order_id' : orderId,
+                    '_token' : encryption(token),
+                    '_generated_token' : generatedToken
+                }
+            ).execute()
+
+            return {
+                'status' : 200,
+                'order_token' : generatedToken
+            }
+        except Exception as e:
+            print(e)
+            raise e
+
+    def rejectDeliveryOrder(self, token : str, orderId : int) -> dict[str, int]:
+        try:
+            self.__instance.rpc(
+                'reject_delivery_order_by_id',
+                params={
+                    '_order_id' : orderId,
+                    '_token' : encryption(token)
+                }
+            ).execute()
+
+            return {
+                'status' : 200
+            }
+        except Exception as e:
+            print(e)
+            raise Exception('Something went wrong')
 
 if __name__ == '__main__': # plan is to fetch the entire data like brands etc using joins and such I am done for today, see you tomorrow :) DS
     s = Supabase()
