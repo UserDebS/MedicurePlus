@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import pickle as pkl
 import os
 
-from datatypes import AcceptedOrderDetails, ImageData, UserData, MedicineDetails, AuthData, MedicineDetailedData, Order, PrevOrderModel, shopOrDeliveryData, OrderMedicineData, OrderDetails
+from datatypes import AcceptedOrderDetails, ImageData, UserData, MedicineDetails, AuthData, MedicineDetailedData, Order, PrevOrderModel, shopOrDeliveryData, OrderMedicineData, OrderDetails, DeliveryAcceptedOrderDetails
 from SupabaseClient import Supabase
 from service.trie import Trie
 from service.imageClassifier import ImageClassifier
@@ -152,6 +152,16 @@ async def getOrders(req : Request, offset : int = 0, limit : int = 15) -> list[P
     except:
         return []
     
+@app.get('/ordertoken/{orderId}')
+async def getOrderToken(orderId : int, req : Request) -> str:
+    try:
+        if(req.cookies.get('medicure_auth') == None):
+            raise HTTPException(status_code=400, detail='Could not get order token')
+        return supabase.getOrderToken(req.cookies.get('medicure_auth'), orderId=orderId)
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=400, detail='Could not get orders')
+
 #%% Shop endpoints
 
 @app.get('/shops/login') #login for shops by cookies
@@ -267,6 +277,20 @@ def rejectShopOrders(req : Request, orderId : int) -> dict[str, int]:
     except:
         raise HTTPException(status_code=404, detail='Token does not exist')
     
+@app.patch('/shops/handover')
+async def shopHandOver(orderId : int, orderToken : str, req : Request) -> dict[str, int]:
+    try:
+        if(req.cookies.get('medicure_shop_auth') == None):
+            raise HTTPException(status_code=404, detail='Token does not exist')
+        
+        return supabase.shopHandOver(
+            orderId=orderId,
+            orderToken=orderToken,
+            token=req.cookies.get('medicure_shop_auth')
+        )
+    except:
+        raise HTTPException(status_code=404, detail='Token does not exist')
+
 #%% Delivery endpoints
 
 @app.get('/deliveries/login')
@@ -332,18 +356,18 @@ async def getPendingDeliveryOrders(req : Request) -> list[OrderDetails]:
     except:
         raise HTTPException(status_code=404, detail='Token does not exist')
     
-@app.get('/deliveries/orders/{orderId}')
-async def getDeliveryOrderMedicineData(orderId : int, req : Request) -> list[OrderMedicineData]:
+@app.get('/deliveries/orders/{shopId}/{orderId}')
+async def getDeliveryOrderMedicineData(shopId : int, orderId : int, req : Request) -> list[OrderMedicineData]:
     try:
         if(req.cookies.get('medicure_delivery_auth') == None):
             raise HTTPException(status_code=404, detail='Token does not exist')
-        return supabase.getDeliveryOrderMedicineData(req.cookies.get('medicure_delivery_auth'), orderId)
+        return supabase.getDeliveryOrderMedicineData(req.cookies.get('medicure_delivery_auth'), shopId, orderId)
             
     except:
         raise HTTPException(status_code=404, detail='Token or order id does not exist')
 
 @app.get('/deliveries/accepted/orders')
-async def getAcceptedDeliveryOrders(req : Request) -> list[AcceptedOrderDetails]:
+async def getAcceptedDeliveryOrders(req : Request) -> list[DeliveryAcceptedOrderDetails]:
     try:
         if(req.cookies.get('medicure_delivery_auth') == None):
             raise HTTPException(status_code=404, detail='Token does not exist')
@@ -382,6 +406,33 @@ async def rejectDeliveryOrder(orderId : int, req : Request) -> dict[str, int]:
     except:
         raise HTTPException(status_code=404, detail='Token does not exist')
 
+@app.patch('/deliveries/handover')
+async def deliveryHandOver(orderId : int, orderToken : str, req : Request) -> dict[str, int]:
+    try:
+        if(req.cookies.get('medicure_delivery_auth') == None):
+            raise HTTPException(status_code=404, detail='Token does not exist')
+        
+        return supabase.deliveryHandOver(
+            orderId=orderId,
+            orderToken=orderToken,
+            token=req.cookies.get('medicure_delivery_auth')
+        )
+    except:
+        raise HTTPException(status_code=404, detail='Token does not exist')
+
+@app.patch('/deliveries/signal/{orderId}')
+async def setSignal(orderId : int, req : Request) -> dict[str, int]:
+    try:
+        if(req.cookies.get('medicure_delivery_auth') == None):
+            raise HTTPException(status_code=404, detail='Token does not exist')
+        
+        return supabase.setSignal(
+            orderId=orderId,
+            token=req.cookies.get('medicure_delivery_auth')
+        )
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=404, detail='Token does not exist')
 
 #%% Main Function
 if __name__ == '__main__':

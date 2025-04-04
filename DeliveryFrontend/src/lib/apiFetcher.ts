@@ -195,10 +195,11 @@ const apiFetcher = (targetRoute : string) => {
         },
 
         getDeliveryMedicineData : async function(
+            shopId : number,
             orderId : number
         ) {
             return await fetch(
-                targetRoute + `deliveries/orders/${orderId}`,
+                targetRoute + `deliveries/orders/${shopId}/${orderId}`,
                 {
                     method : 'GET',
                     credentials : 'include'
@@ -238,6 +239,44 @@ const apiFetcher = (targetRoute : string) => {
                     credentials : 'include'
                 }
             );
+        },
+
+        shopHandOver : async function (
+            orderId : number,
+            orderToken : string
+        ) {
+            return await fetch(
+                targetRoute + `shops/handover/?orderId=${orderId}&orderToken=${orderToken}`,
+                {
+                    method : 'PATCH',
+                    credentials : 'include'
+                }
+            )
+        },
+
+        deliveryHandOver : async function (
+            orderId : number,
+            orderToken : string
+        ) {
+            return await fetch(
+                targetRoute + `deliveries/handover/?orderId=${orderId}&orderToken=${orderToken}`,
+                {
+                    method : 'PATCH',
+                    credentials : 'include'
+                }
+            )
+        },
+
+        deliverySignal : async function (
+            orderId : number
+        ) {
+            return await fetch(
+                targetRoute + `deliveries/signal/${orderId}`,
+                {
+                    method : 'PATCH',
+                    credentials : 'include'
+                }
+            )
         }
     }
 };

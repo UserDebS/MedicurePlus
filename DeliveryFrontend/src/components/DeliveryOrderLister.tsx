@@ -1,20 +1,27 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../lib/authContext";
 import MedicineListModal from "./MedicineListModal";
-import { RealtimeChannel } from "@supabase/supabase-js";
+import { RealtimeChannel, RealtimePostgresChangesPayload, RealtimePostgresUpdatePayload } from "@supabase/supabase-js";
 import { LinkedList } from "../lib/dataStructures";
-import { AcceptedOrderDetails, OrderDetails, OrderMedicineData } from "../lib/datatypes";
+import { DeliveryAcceptedOrderDetails, OrderDetails, OrderMedicineData } from "../lib/datatypes";
 import { toast } from "sonner";
 import OrderListItem from "./OrderListItem";
-import distance from "../lib/distance";
-import { subscribeChannel } from "../lib/supabaseClient";
+import { deliveryChannelSubscription, getOrderLocation } from "../lib/supabaseClient";
 import apiFetcher from "../lib/apiFetcher";
+import DeliveryAcceptedOrderListItem from "./DeliveryAcceptedOrderListItem";
+import distance from "../lib/distance";
+import Modal from "./Modal";
 
 const DeliveryOrderLister = () => {
-    const channelRef = useRef<RealtimeChannel | null>(null);
     const {deliveryValidated} = useAuth();
     const [locationPermission, setLocationPermission] = useState<boolean>(false);
     const [hide, setHide] = useState<boolean>(true);
+
+    const [modalHide, setModalHide] = useState<boolean>(true);
+    const [currentOrderId, setCurrentOrderId] = useState<number>(-1);
+
+    // Channel Reference
+    const deliveryChannelRef = useRef<RealtimeChannel | null>(null);
 
     // UI States
     const [frontOrderList, setFrontOrderList] = useState<LinkedList<OrderDetails>>(new LinkedList<OrderDetails>(
@@ -35,7 +42,7 @@ const DeliveryOrderLister = () => {
     const backOrderListRef = useRef<LinkedList<OrderDetails>>(backOrderList);
 
     const [medicineData, setMedicinedata] = useState<OrderMedicineData[]>([]);
-    const [acceptedOrders, setAcceptedOrders] = useState<AcceptedOrderDetails[]>([]);
+    const [acceptedOrders, setAcceptedOrders] = useState<DeliveryAcceptedOrderDetails[]>([]);
 
     const handleLocationPermission = () => {
         window.navigator.permissions
@@ -46,7 +53,7 @@ const DeliveryOrderLister = () => {
                 <span className="text-red-500 font-bold">
                     Enable location to place order!
                 </span>
-            )
+            );
 
             permissionStatus.onchange = () => {
                 if(permissionStatus.state === 'granted') setLocationPermission(true);
@@ -72,6 +79,7 @@ const DeliveryOrderLister = () => {
     useEffect(() => {
         frontOrderListRef.current = frontOrderList;
         backOrderListRef.current = backOrderList;
+
     }, [frontOrderList, backOrderList]);
 
     // Start Up Set Up
@@ -107,7 +115,7 @@ const DeliveryOrderLister = () => {
             await apiFetcher.getAcceptedDeliveryOrders()
                 .then(res => {
                     if(res.ok) return res;
-                    else throw new Error('Could not fetch Accepted Order Details')
+                    else throw new Error('Could not fetch Accepted Order Details');
                 })
                 .then(res => res.json())
                 .then(res => {
@@ -127,121 +135,144 @@ const DeliveryOrderLister = () => {
                 });
         }
 
-        if(channelRef.current === null) {
+        if(deliveryChannelRef.current === null) {
             getOrderedMedicineDataColdStart();
             getAcceptedMedicineDataColdStart();
 
-            return;
-            
             console.log('Setting up channel');
-            channelRef.current = subscribeChannel(
-                'order_queue',
-                (payload : any) => {
-                    payload = payload.new;
 
-                    window.navigator.geolocation.getCurrentPosition(location => {
-                        const dist : number = distance(
-                            payload.latitude as number, 
-                            payload.longitude as number, 
-                            location.coords.latitude,
-                            location.coords.longitude
+            deliveryChannelRef.current = deliveryChannelSubscription(
+                // Order Queue
+                (payload : RealtimePostgresUpdatePayload<{[key : string] : any}>) => {
+                    console.log(payload);
+                    if(payload.new.status === 'ONTHEWAY') {
+                        setAcceptedOrders(prevOrders =>
+                            [
+                                ...prevOrders.map(orders => 
+                                    orders.orderId === payload.new.id
+                                    ? { ...orders, verified : true }
+                                    : orders
+                                )
+                            ]
                         );
-                        if(dist <= 8 && payload.status === 'PENDING') {
-                            (async() => {
-                                const newBackOrderList : LinkedList<OrderDetails> = backOrderListRef.current.copy();
-
-                                newBackOrderList.addData({
-                                    orderId : payload.id,
-                                    distance : dist,
-                                    locationLink : 'user defined',
-                                    medicineData : await apiFetcher.getOrderMedicineData(payload)
-                                    .then(async(res) => {
-                                        const data : OrderMedicineData[] = await res.json();
-                                        return data;
-                                    })
-                                    .catch(_ => [])
-                                });
-
-                                setBackOrderList(newBackOrderList);
-                            })();
-                        }
-                    }, err => {
-                            toast(
-                                <span className="text-red-500 font-bold">
-                                    Couldn't access <em>Location Details</em>! <br />
-                                    {err.message}
-                                </span>
-                            );
-                        }
-                    );
+                    }
                 },
-                (payload : any) => {
-                    payload = payload.new;
+                // Order To Delivery
+                (payload : RealtimePostgresChangesPayload<{[key : string] : any}>) => {
+                    if(payload.eventType === 'INSERT') {
+                        setFrontOrderList(prevList => {
+                            const newList = prevList.copy();
 
-                    window.navigator.geolocation.getCurrentPosition(location => {
-                        const dist : number = distance(
-                            payload.latitude as number, 
-                            payload.longitude as number, 
-                            location.coords.latitude,
-                            location.coords.longitude
-                        );
-
-                        const newFrontList = frontOrderListRef.current.copy();
-                        const newBackList = backOrderListRef.current.copy();
-
-                        if(dist > 8 || payload.status !== 'PENDING') {
-                            newFrontList.deleteData({
-                                orderId : payload.id,
-                                distance : dist,
-                                locationLink : '',
-                                medicineData : []
+                            newList.deleteData({
+                                orderId : payload.new.order_id,
+                                distance : -1,
+                                medicineData : [],
+                                locationLink : ''
                             });
 
-                            newBackList.deleteData({
-                                orderId : payload.id,
-                                distance : dist,
-                                locationLink : '',
-                                medicineData : []
+                            return newList;
+                        });
+
+                        setBackOrderList(prevList => {
+                            const newList = prevList.copy();
+
+                            newList.deleteData({
+                                orderId : payload.new.order_id,
+                                distance : -1,
+                                medicineData : [],
+                                locationLink : ''
                             });
 
-                            if(newFrontList.getSize() === 0) newFrontList.insertDataFromList(newBackList, 15); 
+                            return newList;
+                        });
+                    }
+                },
+                // Order To Shop
+                (payload : RealtimePostgresChangesPayload<{[key : string] : any}>) => {
+                   if(payload.eventType === 'INSERT') {
+                        
+                        window.navigator.geolocation.getCurrentPosition(location => {
+                            getOrderLocation(payload.new.order_id)
+                                .then(res => {
+                                    const { latitude, longitude } = res;
+                                    const dist = distance(
+                                        location.coords.latitude,
+                                        location.coords.longitude,
+                                        latitude,
+                                        longitude
+                                    );
 
-                        } else {
-                            (async() => {
-                                const data : OrderMedicineData[] = await apiFetcher.getOrderMedicineData(payload.id)
-                                    .then(async(res) => {
-                                        const result : OrderMedicineData[] = await res.json();
-                                        return result;
-                                    })
-                                    .catch(_ => []);
+                                    if(dist <= 8) {
+                                        apiFetcher.getDeliveryMedicineData(
+                                            payload.new.shop_id,
+                                            payload.new.order_id
+                                        ).then(res => {
+                                            if(res.ok) return res.json();
+                                            else throw new Error('Order could not be loaded');
+                                        })
+                                        .then(res => {
+                                            setBackOrderList(prevList => {
+                                                const newBackList = prevList.copy();
 
-                                newFrontList.updateData({
-                                    orderId : payload.id,
-                                    distance : dist,
-                                    locationLink : 'user defined',
-                                    medicineData : data
+                                                newBackList.addData({
+                                                    orderId : payload.new.order_id,
+                                                    distance : dist,
+                                                    medicineData : res,
+                                                    locationLink : `https://www.google.com/maps/dir/${location.coords.latitude},${location.coords.longitude}/${latitude},${longitude}`
+                                                });
+
+                                                return newBackList;
+                                            });
+                                        })
+                                        .catch(err => {
+                                            toast(
+                                                <span>
+                                                    Order could not be loaded
+                                                    {err}
+                                                </span>
+                                            );
+                                        })
+                                    }
+                                })
+                                .catch(err => {
+                                    toast(
+                                        <span className="text-red-500 font-bold">
+                                            Couldn't get order location
+                                            {err}
+                                        </span>
+                                    )
                                 });
+                        });
 
-                                newBackList.updateData({
-                                    orderId : payload.id,
-                                    distance : dist,
-                                    locationLink : 'user defined',
-                                    medicineData : data
-                                });
-                            })();
-                        }
+                   } else if(payload.eventType === 'DELETE') {
+                        setFrontOrderList(prevList => {
+                            const newList = prevList.copy();
 
-                        setFrontOrderList(newFrontList);
-                        setBackOrderList(newBackList);
-                    }, err => {
-                            toast(
-                                <span className="text-red-500 font-bold">
-                                    Couldn't access <em>Location Details</em>! <br />
-                                    {err.message}
-                                </span>
-                            );
-                        }
-                    );
+                            newList.deleteData({
+                                orderId : payload.old.order_id,
+                                distance : -1,
+                                medicineData : [],
+                                locationLink : ''
+                            });
+
+                            return newList;
+                        });
+
+                        setBackOrderList(prevList => {
+                            const newList = prevList.copy();
+
+                            newList.deleteData({
+                                orderId : payload.old.order_id,
+                                distance : -1,
+                                medicineData : [],
+                                locationLink : ''
+                            });
+
+                            return newList;
+                        });
+
+                        setAcceptedOrders(prevList => [...prevList.filter(item => item.orderId !== payload.old.order_id)]);
+                   }
                 }
             );
         }
@@ -253,8 +284,8 @@ const DeliveryOrderLister = () => {
     }
 
     const handleRemoveOrder = (orderId : number) => {
-        setFrontOrderList(prevList => {
-            const newFrontList = prevList.copy();
+        setFrontOrderList(prevFrontList => {
+            const newFrontList = prevFrontList.copy();
 
             newFrontList.deleteData({
                 orderId : orderId,
@@ -262,6 +293,16 @@ const DeliveryOrderLister = () => {
                 locationLink : '',
                 medicineData : []
             });
+
+            if(newFrontList.getSize() === 0) {
+                setBackOrderList(prevBackList => {
+                    const newBackList = prevBackList.copy();
+
+                    newFrontList.insertDataFromList(newBackList, 10);
+
+                    return newBackList;
+                });
+            }
 
             return newFrontList;
         });
@@ -288,7 +329,7 @@ const DeliveryOrderLister = () => {
                         throw new Error('Invalid Order');
                     }
     
-                    setAcceptedOrders(prevOrders => [...prevOrders, {...data, orderToken : res.order_token}]);
+                    setAcceptedOrders(prevOrders => [...prevOrders, {...data, orderToken : res.order_token, verified : false}]);
                 } else throw new Error('Could not Accept Order');
             })
             .catch(err => toast(
@@ -312,16 +353,56 @@ const DeliveryOrderLister = () => {
     
                 } else throw new Error('Order cancellation failed');
             })
-            .catch(err => toast(
-                <span>
-                    Couldn't reject order <br />
-                    {err}
-                </span>
-            ));
+            .catch(err => {
+                toast(
+                    <span>
+                        Couldn't reject order <br />
+                        {err}
+                    </span>
+                );
+            });
+    }
+
+    const handleOrderDeliveryHandOver = (orderId : number, orderToken : string) => {
+        apiFetcher.deliveryHandOver(orderId, orderToken)
+                    .then(res => {
+                        if(res.ok) return res.json();
+                        else throw new Error('Unsuccessful handover');
+                    })
+                    .then(res => {
+                        if(res.status === 201) {
+                            setAcceptedOrders(prevOrders => [...prevOrders.filter(item => item.orderId !== orderId)]);
+                            toast(
+                                <span className="text-green-500 font-bold">
+                                    Successful Handover!
+                                </span>
+                            );
+                        }
+                        else throw new Error('Unsuccessful handover');
+                    })
+                    .catch(err => {
+                        toast(
+                            <span className="text-red-500 font-bold">
+                                Unsuccessful Handover!
+                                {err}
+                            </span>
+                        );
+                    });
     }
 
     return ( 
-        <div className="h-full w-full overflow-hidden py-1">
+        <div className="h-full w-full overflow-hidden py-1 relative">
+            {
+                modalHide
+                ? <></>
+                : <Modal 
+                    orderId={currentOrderId}
+                    closeHandler={() => {
+                        setModalHide(true);
+                    }}
+                    handOverHandler={handleOrderDeliveryHandOver}
+                />
+            }
             {
                 !hide?
                 <MedicineListModal 
@@ -368,11 +449,15 @@ const DeliveryOrderLister = () => {
                     className="w-full h-[calc(100%-36px-16px)] p-2 border border-black rounded-lg">
                         <ul className="block size-full bg-white overflow-y-auto">
                             {
-                                acceptedOrders.map(item => AcceptedOrderListItem(
+                                acceptedOrders.map(item => DeliveryAcceptedOrderListItem(
                                         item,
                                         handleOrderViewRequest,
-                                        handleOrderDeliveryHandOver,
-                                        handleRejectOrder
+                                        (orderId : number) => {
+                                            setCurrentOrderId(orderId);
+                                            setModalHide(false);
+                                        },
+                                        handleRejectOrder,
+                                        item.verified
                                     )
                                 )
                             }

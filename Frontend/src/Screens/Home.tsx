@@ -4,11 +4,16 @@ import TextSearch from "@/components/TextSearch";
 import GridShowcase from "@/components/ui/GridShowcase";
 import apiFetcher from "@/lib/apiFetcher";
 import { MedicineDetails } from "@/lib/datatypes";
-import { useEffect, useState } from "react";
+import { getSignal } from "@/lib/supabaseClient";
+import { RealtimeChannel } from "@supabase/supabase-js";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 const Home = () => {
     const [medList, setMedList] = useState<MedicineDetails[]>([]);
     const [offset, setOffset] = useState<number>(0);
+
+    const channelRef = useRef<RealtimeChannel | null> (null);
 
     const loadInitialData = async() => {
         await apiFetcher.getAllMedicines(offset, 20).then(async(res) =>  {
@@ -32,6 +37,29 @@ const Home = () => {
 
     useEffect(() => {
         loadInitialData();
+        if(channelRef.current === null) {
+            console.log('Setting up channel');
+            channelRef.current = getSignal(
+                (orderId : number) => {
+                    console.log(orderId);
+                    apiFetcher.getOrderToken(orderId)
+                        .then(res => {
+                            if(res.ok) return res.json();
+                            else throw new Error('Failed Order token requeust');
+                        })
+                        .then(res => {
+                            toast(
+                                <span className="text-green-500 font-bold">
+                                    <strong>Order Token</strong> <br />
+                                    <span className="text-black">{res}</span>
+                                </span>
+                            );
+                        })
+                        .catch(_ => console.log(_));
+                }
+            );
+            console.log(channelRef.current);
+        }
     }, []);
 
     useEffect(() => {

@@ -1,4 +1,5 @@
-import {createClient, RealtimeChannel, RealtimePostgresInsertPayload, SupabaseClient} from '@supabase/supabase-js';
+import {createClient, RealtimeChannel, SupabaseClient} from '@supabase/supabase-js';
+import apiFetcher from './apiFetcher';
 
 const instance : SupabaseClient = createClient(
     import.meta.env.VITE_SUPABASE_URL!, 
@@ -6,6 +7,12 @@ const instance : SupabaseClient = createClient(
 );
 
 let channel : RealtimeChannel | null = null;
+
+export function sendSignal(
+    orderId : number
+) {
+    return apiFetcher.deliverySignal(orderId);
+}
 
 export function subscribeChannel (
     tableName : Readonly<string>,
@@ -41,6 +48,63 @@ export function subscribeChannel (
     }
 
     return channel;
+}
+
+
+export function deliveryChannelSubscription (
+    orderQueueHandler : any,
+    orderToDeliveryHandler : any,
+    orderToShopHandler : any
+) : RealtimeChannel {
+    return instance.
+        channel('schema-db-changes')
+        .on(
+            'postgres_changes',
+            {
+                event : "UPDATE",
+                schema : 'public',
+                table : "order_queue"
+            },
+            (payload) => {
+                orderQueueHandler(payload);
+            }
+        )
+        .on(
+            'postgres_changes',
+            {
+                event : '*',
+                schema : 'public',
+                table : "order_to_delivery"
+            },
+            (payload) => {
+                orderToDeliveryHandler(payload);
+            }
+        )
+        .on(
+            'postgres_changes',
+            {
+                event : '*',
+                schema : 'public',
+                table : "order_to_shop"
+            },
+            (payload) => {
+                orderToShopHandler(payload);
+            }
+        )
+        .subscribe();        
+}
+
+export async function getOrderLocation(orderId : number) {
+    const { data } =  await instance
+        .from('order_queue')
+        .select('latitude, longitude')
+        .eq('id', orderId)
+        .single();
+
+    return {
+        latitude : data!.latitude as number,
+        longitude : data!.longitude as number
+    }
 }
 
 export function removeChannel (channel : RealtimeChannel) {

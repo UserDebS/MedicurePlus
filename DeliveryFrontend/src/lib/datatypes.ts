@@ -42,3 +42,12 @@ export type AcceptedOrderDetails = {
     medicineData : OrderMedicineData[],
     orderToken : string
 }
+
+export type DeliveryAcceptedOrderDetails = { 
+    orderId : number,
+    distance : number,
+    locationLink : string,
+    medicineData : OrderMedicineData[],
+    orderToken : string,
+    verified : boolean
+}

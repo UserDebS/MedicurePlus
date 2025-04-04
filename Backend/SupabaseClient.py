@@ -3,7 +3,7 @@ from threading import Thread
 from dotenv import load_dotenv
 from os import getenv
 
-from datatypes import AcceptedOrderDetails, Location, MedicineUploadData, UserData, AuthData, MedicineDetails, MedicineDetailedData, OrderItem, PrevOrderModel, shopOrDeliveryData, OrderMedicineData, OrderDetails
+from datatypes import AcceptedOrderDetails, Location, MedicineUploadData, UserData, AuthData, MedicineDetails, MedicineDetailedData, OrderItem, PrevOrderModel, shopOrDeliveryData, OrderMedicineData, OrderDetails, DeliveryAcceptedOrderDetails
 
 from service.encryption import strGen, encryption, capitalize
 from service.listClassifier import listClassifier
@@ -427,7 +427,7 @@ class Supabase:
             ).execute().data
         ))
 
-    def getDeliveryOrderMedicineData(self, token : str, orderId : int) -> list[OrderMedicineData]:
+    def getDeliveryOrderMedicineData(self, token : str, shopId : int, orderId : int) -> list[OrderMedicineData]:
         return list(map(
             lambda x: OrderMedicineData(**{
                 'medicineName' : x['medicine_name'],
@@ -437,18 +437,20 @@ class Supabase:
             'get_delivery_order_medicine_data',
             {
                 '_token' : encryption(token),
+                '_shop_id' : shopId,
                 '_order_id' : orderId
             }
         ).execute().data))
 
-    def getAcceptedDeliveryOrders(self, token : str) -> list[AcceptedOrderDetails]:
+    def getAcceptedDeliveryOrders(self, token : str) -> list[DeliveryAcceptedOrderDetails]:
         return list(map(
-            lambda x: AcceptedOrderDetails(**{
+            lambda x: DeliveryAcceptedOrderDetails(**{
                 'orderId' : x['_order_id'],
                 'distance' : x['_distance'],
                 'locationLink' : x['_link'],
                 'medicineData' : json.loads(x['_medicine_data']),
-                'orderToken' : x['_order_token']
+                'orderToken' : x['_order_token'],
+                'verified' : x['_verified']
             }),
             self.__instance.rpc(
             'get_accepted_delivery_orders',
@@ -494,6 +496,73 @@ class Supabase:
         except Exception as e:
             print(e)
             raise Exception('Something went wrong')
+
+    def shopHandOver(self, orderId : int, orderToken : str, token : str) -> dict[str, int]:
+        try:
+            self.__instance.rpc(
+                'shop_hand_over',
+                {
+                    '_order_id' : orderId,
+                    '_order_token' : orderToken,
+                    '_token' : encryption(token)
+                }
+            ).execute()
+
+            return {
+                'status' : 201
+            }
+        except Exception as e:
+            print(e)
+            return {
+                'status' : 404
+            }
+
+    def deliveryHandOver(self, orderId : int, orderToken : str, token : str) -> dict[str, int]:
+        try:
+            self.__instance.rpc(
+                'delivery_hand_over',
+                {
+                    '_order_id' : orderId,
+                    '_order_token' : orderToken,
+                    '_token' : encryption(token)
+                }
+            ).execute()
+
+            return {
+                'status' : 201
+            }
+        except Exception as e:
+            print(e)
+            return {
+                'status' : 404
+            }
+        
+    def getOrderToken(self, token : str, orderId : int) -> str:
+        return self.__instance.rpc(
+            'get_order_token_signal',
+            {
+                '_token' : encryption(token),
+                '_order_id' : orderId
+            }
+        ).execute().data
+
+    def setSignal(self, token : str, orderId : int) -> dict[str, int]:
+        try:
+            self.__instance.rpc(
+                'set_order_token_signal',
+                {
+                    '_token' : encryption(token),
+                    '_order_id' : orderId
+                }
+            ).execute()
+
+            return {
+                'status' : 201
+            }
+        except Exception as e:
+            print(e)
+            raise e
+
 
 if __name__ == '__main__': # plan is to fetch the entire data like brands etc using joins and such I am done for today, see you tomorrow :) DS
     s = Supabase()

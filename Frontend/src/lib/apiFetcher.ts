@@ -97,8 +97,15 @@ const apiFetcher = (targetroute : string) => {
             return await fetch(targetroute + `order/?offset=${ofst}&limit=${lmt}`, {
                 method : 'GET',
                 credentials : 'include',
-            })
+            });
         },
+
+        getOrderToken : async function(orderId : number) {
+            return await fetch(targetroute + `ordertoken/${orderId}`, {
+                method : 'GET',
+                credentials : 'include'
+            });
+        }
     }
 }
 

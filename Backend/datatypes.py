@@ -94,3 +94,11 @@ class AcceptedOrderDetails(BaseModel):
     locationLink : str
     medicineData : list[OrderMedicineData]
     orderToken : str
+
+class DeliveryAcceptedOrderDetails(BaseModel):
+    orderId : int
+    distance : float
+    locationLink : str
+    medicineData : list[OrderMedicineData]
+    orderToken : str
+    verified : bool

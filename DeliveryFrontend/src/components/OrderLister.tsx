@@ -152,7 +152,7 @@ const OrderLister = () => {
                                 newBackOrderList.addData({
                                     orderId : payload.id,
                                     distance : dist,
-                                    locationLink : 'user defined',
+                                    locationLink : `https://www.google.com/maps/dir/${location.coords.latitude},${location.coords.longitude}/${payload.latitude},${payload.longitude}`,
                                     medicineData : await apiFetcher.getOrderMedicineData(payload)
                                     .then(async(res) => {
                                         const data : OrderMedicineData[] = await res.json();
@@ -284,7 +284,10 @@ const OrderLister = () => {
     // Reject Order After Accidentally Accepting it
     const handleRejectOrder = async (orderId : number) => {
         await apiFetcher.removeOrder(orderId)  
-        .then(res => res.json())
+        .then(res => {
+            if(res.ok) return res.json();
+            else throw new Error('Order cancellation failed');
+        })
         .then(res => {
             if(res.status === 200) {
                 // State logic
@@ -312,12 +315,45 @@ const OrderLister = () => {
                 medicineData : []
             });
 
+            if(newFrontList.getSize() === 0) {
+                setBackOrderList(prevBackList => {
+                    const newBackList = prevBackList.copy();
+
+                    newFrontList.insertDataFromList(newBackList, 10);
+
+                    return newBackList;
+                })
+            }
+
             return newFrontList;
         });
     }
 
     const handleOrderDeliveryHandOver = (orderId : number, orderToken : string) => {
-
+        apiFetcher.shopHandOver(orderId, orderToken)
+            .then(res => {
+                if(res.ok) return res.json();
+                else throw new Error('Unsuccessful handover');
+            })
+            .then(res => {
+                if(res.status === 201) {
+                    setAcceptedOrders(prevOrders => [...prevOrders.filter(item => item.orderId !== orderId)]);
+                    toast(
+                        <span className="text-green-500 font-bold">
+                            Successful Handover!
+                        </span>
+                    );
+                }
+                else throw new Error('Unsuccessful handover');
+            })
+            .catch(err => {
+                toast(
+                    <span className="text-red-500 font-bold">
+                        Unsuccessful Handover!
+                        {err}
+                    </span>
+                );
+            });
     }
 
     return ( 
