@@ -16,7 +16,7 @@ This is our final year project on the use of machine learning in heath industry.
 |    Frontend    |     Backend     | Model Designing |    Database    |
 | :-------------: | :-------------: | :-------------: | :-------------: |
 |   Soham Dutta   |  Souvik Ghosh  |  Souvik Ghosh  | Debmalya Sarkar |
-| Satwik Das(UI) | Debmalya Sarkar | Debmalya Sarkar |       --       |
+| Arkabrata Basu | Debmalya Sarkar | Debmalya Sarkar |       --       |
 | Debmalya Sarkar |       --       | Arghadeep Paul |       --       |
 
 # Project Folder Structure
